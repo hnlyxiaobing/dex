@@ -1,0 +1,5 @@
+// import {
+//   "hnlyxiaobing/dex" @lib,
+// }
+
+pkgtype(kind: "executable")
