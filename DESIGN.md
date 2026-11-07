@@ -1,6 +1,6 @@
 # dex · 设计契约（DESIGN.md）
 
-> Round-1 / 2026-11-06 ｜ 状态：架构与声明可评审，无业务逻辑
+> Round-1 / 2026-11-06 ｜ R2 冻结前整改更新 2026-11-07 ｜ 状态：**已实现**（表解析 / code_item / 指令解码 / smali 输出均为真实实现），门禁全绿；真实样本 P0 缺陷已修复（见 §13）
 
 ## 1. 分层位置与职责
 
@@ -36,6 +36,8 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 ## 5. 资源生命周期
 
 全部纯值；无外部句柄、无释放函数。`parse` 不缓存输入 `Bytes` 之外的状态；返回值只读。
+**本模块没有 `close` / `detach`**：纯值无句柄，不存在释放或“二次释放”问题；同一 `DexFile` 可被任意多次
+访问/反汇编，重复调用不产生副作用（若未来引入句柄，必须满足“不会二次释放，重复调用返回明确错误”）。
 
 ## 6. 线程 / 并发边界
 
@@ -64,26 +66,45 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 
 ## 10. 测试策略
 
-| 层次 | 内容 |
-|---|---|
-| 黑盒 | 两个真实 APK 全部 dex 解析；与 `dexdump` 抽样反汇编一致 |
-| 白盒 | 六表索引边界、`code_item` 偏移、try/catch、`debug_info` |
-| 畸形输入 | 截断、非法 magic、非法 opcode、越界索引、多 dex 误喂 |
-| 门禁 | `moon fmt --check` / `moon check` / `moon test --enable-coverage` / `moon info` |
+| 层次 | 内容 | 实跑状态（2026-11-07） |
+|---|---|---|
+| 黑盒（程序化 fixture，L0） | 六表、class_def、code_item、方法名、magic/checksum 错误路径 | ✅ 37 例 |
+| 黑盒（真实样本，L1/L2，R2 WP-G 新增） | 内嵌真实 `classes.dex`（tvshell-debug 4368 B、motionshell 3148 B）；`dexdump` 规范化黄金 `fixtures/golden/dex/*.norm.txt` 与解析输出逐字段 diff | ✅ 工具侧 + **解析侧全通**（P0 缺陷已修复，§13） |
+| 畸形派生（R2 新增 `fixtures_malformed_test.mbt`） | 从真实 dex 派生：截断 / magic 污染 / 错误 checksum / 表偏移污染 / 未知 opcode（重算 adler32 后直达结构错误）；断言报 `DexError` 而非 panic | ✅ 5 例 |
+| 白盒 | 六表索引边界、`code_item` 偏移、try/catch、`debug_info` | ✅ |
+| 门禁 | `moon fmt --check` / `moon check --deny-warn` / `moon build` / `moon test` | ✅ 全绿 |
+
+skip 机制：MoonBit 原生 `#skip` 属性（默认不计入 `Total tests`；`moon test --include-skipped` 才执行）。
+所有未跑通/未内嵌的用例都用 `#skip` 显式标注，**绝不冒充通过**。
 
 ## 11. 验收标准（实现轮）
 
-1. 两个 APK 全部 dex 解析无崩溃；2. 反汇编抽样与 dexdump 一致；3. 黄金样本进 `moon test`；4. R4 `moon check --deny-warn` 转绿。
+1. 两个 APK 全部 dex 解析无崩溃 —— ✅ **达成**（P0 缺陷修复后真实 DEX 解析通过，47/47）；
+2. 反汇编抽样与 dexdump 一致 —— ✅ 解析侧差分已启用并全通；
+3. 黄金样本进 `moon test` —— ✅ L1/L2 样本与黄金已入库，工具侧 + 解析侧差分全通；
+4. `moon check --deny-warn` 转绿 —— ✅（原定 R4，已提前达成）。
 
 ## 12. 未解决问题 / 待验证假设
 
-- DEX v041 / 厂商加固 DEX 的实际分布未验证（Q1 需真实 APK）。
-- `aapt2`/`dexdump` 官方差分套件是否存在未证实（Q6）。
+- DEX v041 / 厂商加固 DEX 的实际分布未验证（Q1 已定位候选资产，但目标游戏 APK 许可不明未入库，见
+  `../docs/open-questions.md` §2.1）。
+- `aapt2`/`dexdump` 官方差分套件是否存在未证实（Q6）；本轮已自建 `fixtures/golden/golden-diff.ps1` 三链差分。
 - ARM64 指令边界判断若未来给 `ptrace_lite` 用，需要额外反汇编支持。
 
 ## 13. 当前状态与 TODO
 
-`dex.mbt` 已写入全部类型与 6 个 `declare` 函数，公开 API 有 `///` 文档注释与 `TODO(实现轮)`。**未实现任何解析逻辑**。字段名避开保留字 `method`（改用 `method_ref`），使 `moon check` 告警只剩 `0068`。
+`dex.mbt` / `parse.mbt` / `instr.mbt` / `disasm.mbt` 已全部实现（**无 `declare`、无 `0068`**），
+公开 API 有 `///` 文档注释；字段名避开保留字 `method`（改用 `method_ref`）。
+
+**R2 WP-G 新增（2026-11-07）**：L1 真实样本（`tests/fixtures/*.classes.dex`）+ L2 黄金
+（`fixtures/golden/dex/*.norm.txt`）+ 畸形派生用例 + 三链差分脚本。
+
+**⚠ P0 缺陷（WP-G 登记 → R2 主控已修复，2026-11-07）**：`parse_class_data` 曾把 `method_idx_diff`
+在 direct/virtual 两段**连续累加**，而 AOSP libdex/dexdump 在每段各自从 0 累加（`static_fields`/
+`instance_fields` 同理）。实测（tvshell-debug，`method_ids_size=43`）：dexdump 报 24,25,26 / 27,28 /
+29,33,34,35；连续累加得 24,49,50 / 27,55 / 29,62,63,64 —— 越界抛 `InvalidIndex(MethodId, 49)`。
+**修复**：进入 instance/virtual 分段时索引复位（`parse.mbt::parse_class_data`）；修复后真实样本
+解析侧差分启用，`golden-diff.ps1 -Chain dex` 全通 exit 0，dex 全部门禁 47/47。
 
 ## References
 

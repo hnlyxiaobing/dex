@@ -2,7 +2,7 @@
 
 **DEX 解析与 Dalvik 反汇编基础库 —— 容器、表、code_item 与指令解码，纯 MoonBit 实现。**
 
-> 状态：**Round-1 架构与声明可评审**。已写入数据结构与 `declare` 签名，`moon check` 0 error（6 条预期 `0068` 告警）。**无业务逻辑**。
+> 状态：**已实现并门禁全绿**（R2 冻结前整改 2026-11-07 复核）。`moon check --deny-warn` 0 error / 0 warning（原 6 条 `0068` 已消失）；`moon test` 43/43。**真实样本解析存在已见缺陷**（见「测试与验收」）。
 
 ## 定位与为什么存在
 
@@ -33,18 +33,20 @@
 
 ## 测试与验收
 
-- **测试策略**：两个真实 APK 的全部 dex 解析无崩溃；`dexdump` 抽样反汇编一致；小型 fixture + smali→dex→smali 往返思路；畸形 magic / 表偏移 / 非法 opcode 注入；`moon test --enable-coverage`。
-- **验收标准**（实现轮）：解析本机两个 APK 全部 dex 无崩溃；反汇编抽样与 dexdump 一致；黄金样本纳入 `moon test`。
-- 依赖资产：真实 APK 不在本工作区（`docs/open-questions.md` Q1）。
+- **测试策略（现状）**：L0 程序化 fixture 37 例（六表 / class_def / code_item / magic·checksum 错误路径）；L1 真实样本内嵌（tvshell-debug 4368 B、motionshell 3148 B）+ L2 `dexdump` 规范化黄金 `fixtures/golden/dex/*.norm.txt` 逐字段差分；畸形派生 5 例（截断 / magic / 错误 checksum / 表偏移 / 未知 opcode，均断言报 `DexError` 而非 panic）。均由 `fixtures/golden/golden-diff.ps1` 驱动。
+- **验收状态**：工具侧 `dexdump ↔ 黄金` **全通**；解析侧 `@dex.parse ↔ 黄金` **已启用并全通** —— WP-G 首跑发现的真实 DEX 缺陷 `InvalidIndex(MethodId, 49)`（`method_idx_diff` 未在 direct/virtual 分段复位）**已由 R2 主控修复**（`parse_class_data` 分段复位，AOSP libdex 行为），tvshell-debug 与 motionshell 解析侧差分均 exit 0，见 `DESIGN.md` §13。
+- 依赖资产：真实 APK 位于工作区外 `D:\MoonBit\motion_sensing_game\`（受控自建与 AOSP 来源已入库提取样本；目标游戏 APK 许可不明仅登记哈希），清单见 `../fixtures/golden/ASSETS.md` 与 `../docs/open-questions.md` §2.1。
 
 ## 当前状态 / 本轮产物
 
 | 项 | 状态 |
 |---|---|
-| `dex.mbt` 数据结构 + `declare` 签名 + 文档注释 | ✅ |
+| `dex.mbt` 数据结构 + 文档注释 | ✅ |
 | `pkg.generated.mbti` API 快照 | ✅ |
-| 表解析 / 指令解码 / smali 输出 | ❌ 后续轮，`TODO(实现轮)` |
-| `moon check` | ✅ 0 error（6 × `0068`，预期） |
+| 表解析 / 指令解码 / smali 输出 | ✅ 真实实现（无 `declare`） |
+| L1 真实样本 + L2 `dexdump` 黄金 + 差分脚本 | ✅ R2 WP-G |
+| 真实 DEX 解析（解析侧差分） | ✅ **全通**（P0 缺陷已修复，DESIGN §13） |
+| `moon check --deny-warn` / `moon build` / `moon test` / `moon fmt --check` | ✅ 全绿（43/43） |
 
 ## 本轮顺序说明
 

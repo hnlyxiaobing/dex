@@ -615,8 +615,13 @@ fn parse_class_data(
   let direct_methods : Array[MethodDef] = []
   let virtual_methods : Array[MethodDef] = []
   // encoded_field × (static + instance)
+  // DEX 规范：static_fields 与 instance_fields 是两个独立分段，
+  // 每段首个条目的 field_idx_diff 即绝对索引（该段从 0 起累加）。
   let mut field_idx = 0
   for i in 0..<(static_size + instance_size) {
+    if i == static_size {
+      field_idx = 0 // 进入 instance_fields 分段，复位（AOSP libdex 行为）
+    }
     let (diff, pa) = uleb_data(data, pos, data_off)
     let (flags, pb) = uleb_data(data, pa, data_off)
     pos = pb
@@ -639,8 +644,13 @@ fn parse_class_data(
     ctx.fields[field_idx] = fd
   }
   // encoded_method × (direct + virtual)
+  // DEX 规范：direct_methods 与 virtual_methods 是两个独立分段，
+  // 每段首个条目的 method_idx_diff 即绝对索引（该段从 0 起累加）。
   let mut method_idx = 0
   for k in 0..<(direct_size + virtual_size) {
+    if k == direct_size {
+      method_idx = 0 // 进入 virtual_methods 分段，复位（AOSP libdex 行为）
+    }
     let (diff, pa) = uleb_data(data, pos, data_off)
     let (flags, pb) = uleb_data(data, pa, data_off)
     let (code_off, pc) = uleb_data(data, pb, data_off)
