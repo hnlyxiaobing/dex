@@ -684,8 +684,10 @@ fn parse_class_data(
 }
 
 ///|
-/// 解析单个 DEX 字节流（公开接口 `parse` 的实现主体）。
-fn parse_dex(data : Bytes) -> DexFile raise DexError {
+/// 校验 DEX 头：magic、版本、header_size、endian_tag、size_field 与 checksum，
+/// 并检测 ZIP/APK 容器与多 dex 拼接（`MultiDexNotMerged`）。返回版本。
+/// `parse_dex` 与注解/静态初值入口共享同一校验序列（行为等价、纯代码搬移）。
+fn validate_header(data : Bytes) -> DexVersion raise DexError {
   let file_size = data.length()
   if file_size < 2 {
     raise DexError::UnexpectedEof(file_size)
@@ -729,7 +731,6 @@ fn parse_dex(data : Bytes) -> DexFile raise DexError {
       )
   }
   let checksum = read_u32u(data, 8)
-  let signature = slice_bytes(data, 12, 20)
   let size_field = read_u32(data, 32)
   let header_size = read_u32(data, 36)
   let endian_tag = read_u32u(data, 40)
@@ -759,8 +760,17 @@ fn parse_dex(data : Bytes) -> DexFile raise DexError {
       hex_u(computed, 8),
     )
   }
+  version
+}
+
+///|
+/// 读五张索引表（string/type/proto/field/method）构建解析上下文。
+/// 先执行 `validate_header` 校验头部，再校验六表偏移并解析表内容；
+/// 由 `parse_dex` 与注解/静态初值入口共享（后者不解码 class_def / code_item）。
+fn read_ctx(data : Bytes) -> Ctx raise DexError {
+  ignore(validate_header(data))
+  let file_size = data.length()
   // 六表位置
-  let map_off = read_u32(data, 52)
   let string_ids_size = read_u32(data, 56)
   let string_ids_off = read_u32(data, 60)
   let type_ids_size = read_u32(data, 64)
@@ -898,7 +908,23 @@ fn parse_dex(data : Bytes) -> DexFile raise DexError {
       code: None,
     })
   }
-  let ctx = Ctx::{ strings, types, protos, fields, methods, }
+  Ctx::{ strings, types, protos, fields, methods, }
+}
+
+///|
+/// 解析单个 DEX 字节流（公开接口 `parse` 的实现主体）。
+fn parse_dex(data : Bytes) -> DexFile raise DexError {
+  let version = validate_header(data)
+  let file_size = data.length()
+  let checksum = read_u32u(data, 8)
+  let signature = slice_bytes(data, 12, 20)
+  let size_field = read_u32(data, 32)
+  let header_size = read_u32(data, 36)
+  let endian_tag = read_u32u(data, 40)
+  let map_off = read_u32(data, 52)
+  let class_defs_size = read_u32(data, 96)
+  let class_defs_off = read_u32(data, 100)
+  let ctx = read_ctx(data)
   // class_defs
   let classes : Array[ClassDef] = []
   for i in 0..<class_defs_size {
@@ -909,13 +935,13 @@ fn parse_dex(data : Bytes) -> DexFile raise DexError {
     let interfaces_off = read_u32(data, base + 12)
     let source_file_idx = read_u32(data, base + 16)
     let class_data_off = read_u32(data, base + 24)
-    if class_idx < 0 || class_idx >= types.length() {
+    if class_idx < 0 || class_idx >= ctx.types.length() {
       raise DexError::InvalidIndex(TableKind::TypeId, class_idx)
     }
     let superclass = if superclass_idx == -1 {
       None
     } else {
-      if superclass_idx < 0 || superclass_idx >= types.length() {
+      if superclass_idx < 0 || superclass_idx >= ctx.types.length() {
         raise DexError::InvalidIndex(TableKind::TypeId, superclass_idx)
       }
       Some(superclass_idx)
@@ -923,15 +949,15 @@ fn parse_dex(data : Bytes) -> DexFile raise DexError {
     let interfaces = if interfaces_off == 0 {
       ([] : Array[Int32])
     } else {
-      read_type_list(data, interfaces_off, types, TableKind::ClassDef)
+      read_type_list(data, interfaces_off, ctx.types, TableKind::ClassDef)
     }
     let source_file = if source_file_idx == -1 {
       None
     } else {
-      if source_file_idx < 0 || source_file_idx >= strings.length() {
+      if source_file_idx < 0 || source_file_idx >= ctx.strings.length() {
         raise DexError::InvalidIndex(TableKind::StringId, source_file_idx)
       }
-      Some(strings[source_file_idx])
+      Some(ctx.strings[source_file_idx])
     }
     let (static_fields, instance_fields, direct_methods, virtual_methods) = if class_data_off ==
       0 {
@@ -946,7 +972,7 @@ fn parse_dex(data : Bytes) -> DexFile raise DexError {
     }
     classes.push(ClassDef::{
       class_index: class_idx,
-      type_descriptor: types[class_idx],
+      type_descriptor: ctx.types[class_idx],
       superclass_index: superclass,
       interfaces,
       source_file,
@@ -978,11 +1004,11 @@ fn parse_dex(data : Bytes) -> DexFile raise DexError {
     file_size: size_field,
     header_size,
     endian_tag,
-    strings,
-    type_descriptors: types,
-    protos,
-    fields,
-    methods,
+    strings: ctx.strings,
+    type_descriptors: ctx.types,
+    protos: ctx.protos,
+    fields: ctx.fields,
+    methods: ctx.methods,
     classes,
     map_list,
   }

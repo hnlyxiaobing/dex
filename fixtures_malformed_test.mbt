@@ -196,3 +196,35 @@ test "dex malformed: 未知 chunk [SKIPPED: DEX 无 chunk 概念]" {
     "SKIPPED: DEX 无 chunk；等价用例见 axml 链（未知 chunk 跳过）",
   )
 }
+
+///|
+/// 受控构建多 dex 样本（WP-4 2026-11-07）派生：两个 DEX 条目各自覆盖
+/// 截断 / magic 污染 / 表偏移污染，同样只报 `DexError` 而非 panic。
+/// 样本性质：受控自产（aapt2/d8/apksigner 构建），见 fixtures/golden/ASSETS.md。
+test "dex malformed: 多 dex 样本截断与污染报错且不 panic" {
+  let src = fixture_fx_multidex_dex()
+  let src2 = fixture_fx_multidex2_dex()
+  // 512 字节截断与 dex/tests/fixtures/edge-dex-truncated-512.dex（程序化派生样本）同字节。
+  for cut in [0, 50, 500, 512, 1000, 2115] {
+    assert_true(
+      fx_raises(fx_cut(src, cut)),
+      msg="桶 1 截断到 \{cut} 字节应报 DexError",
+    )
+  }
+  for cut in [0, 50, 800, 1639] {
+    assert_true(
+      fx_raises(fx_cut(src2, cut)),
+      msg="桶 2 截断到 \{cut} 字节应报 DexError",
+    )
+  }
+  assert_true(
+    fx_raises(fx_mut(src2, 0, b'\x58')),
+    msg="桶 2 magic 污染应报 BadMagic",
+  )
+  // 表偏移污染（fx_set_u32_fixed 重算 checksum 越过完整性校验）：
+  // string_ids 偏移（header +56）指向文件外。
+  assert_true(
+    fx_raises(fx_set_u32_fixed(src, 56, 0x0FFFFFFF)),
+    msg="桶 1 string_ids 表偏移越界应报 BadTableOffset/UnexpectedEof",
+  )
+}

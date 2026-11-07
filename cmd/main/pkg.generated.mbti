@@ -6,6 +6,7 @@ package "hnlyxiaobing/dex/cmd/main"
 // Errors
 
 // Types and methods
+type ZEntry
 
 // Type aliases
 

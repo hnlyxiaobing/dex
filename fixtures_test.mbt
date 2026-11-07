@@ -37,16 +37,50 @@ fn fixture_motionshell_dex() -> Bytes {
 ///|
 // GOLDEN-BEGIN dex/tvshell-debug.dexparse.norm.txt
 fn golden_tvshell_dexparse() -> String {
-  "HDR|magic|'dex\\n035\\0'\nHDR|checksum|e2f3e81f\nHDR|signature|8557...b5dc\nHDR|file_size|4368\nHDR|header_size|112\nHDR|string_ids_size|92\nHDR|type_ids_size|28\nHDR|proto_ids_size|22\nHDR|field_ids_size|7\nHDR|method_ids_size|43\nHDR|class_defs_size|4\nSTR|0| \nSTR|1| ABI=\nSTR|2|<init>\nSTR|3|BUILD SDK=\nSTR|4|CONSOLE \nSTR|5|CPU_ABI\nSTR|6|DEFAULT_URL\nSTR|7|I\nSTR|8|ILL\nSTR|9|L\nSTR|10|LI\nSTR|11|LL\nSTR|12|LOAD \nSTR|13|Landroid/app/Activity;\nSTR|14|Landroid/content/Context;\nSTR|15|Landroid/content/Intent;\nSTR|16|Landroid/os/Build$VERSION;\nSTR|17|Landroid/os/Build;\nSTR|18|Landroid/os/Bundle;\nSTR|19|Landroid/util/Log;\nSTR|20|Landroid/view/KeyEvent;\nSTR|21|Landroid/view/View;\nSTR|22|Landroid/view/Window;\nSTR|23|Landroid/webkit/ConsoleMessage;\nSTR|24|Landroid/webkit/WebChromeClient;\nSTR|25|Landroid/webkit/WebSettings;\nSTR|26|Landroid/webkit/WebView;\nSTR|27|Landroid/webkit/WebViewClient;\nSTR|28|Lcom/cteno/tvshell/MainActivity$1;\nSTR|29|Lcom/cteno/tvshell/MainActivity$2;\nSTR|30|Lcom/cteno/tvshell/MainActivity;\nSTR|31|Lcom/cteno/tvshell/R;\nSTR|32|Ldalvik/annotation/EnclosingMethod;\nSTR|33|Ldalvik/annotation/InnerClass;\nSTR|34|Ldalvik/annotation/MethodParameters;\nSTR|35|Ljava/lang/Object;\nSTR|36|Ljava/lang/String;\nSTR|37|Ljava/lang/StringBuilder;\nSTR|38|MainActivity.java\nSTR|39|PAGE_ERROR \nSTR|40|PAGE_FINISHED \nSTR|41|R.java\nSTR|42|SDK_INT\nSTR|43|TAG\nSTR|44|TVSHELL\nSTR|45|V\nSTR|46|VI\nSTR|47|VL\nSTR|48|VLILL\nSTR|49|VLL\nSTR|50|VZ\nSTR|51|Z\nSTR|52|ZIL\nSTR|53|ZL\nSTR|54|accessFlags\nSTR|55|addFlags\nSTR|56|append\nSTR|57|destroy\nSTR|58|e\nSTR|59|file:///android_asset/probe.html\nSTR|60|finish\nSTR|61|getIntent\nSTR|62|getSettings\nSTR|63|getStringExtra\nSTR|64|getWindow\nSTR|65|i\nSTR|66|loadUrl\nSTR|67|message\nSTR|68|name\nSTR|69|names\nSTR|70|onConsoleMessage\nSTR|71|onCreate\nSTR|72|onDestroy\nSTR|73|onKeyDown\nSTR|74|onPageFinished\nSTR|75|onReceivedError\nSTR|76|setAllowFileAccess\nSTR|77|setContentView\nSTR|78|setDomStorageEnabled\nSTR|79|setJavaScriptEnabled\nSTR|80|setLoadWithOverviewMode\nSTR|81|setMediaPlaybackRequiresUserGesture\nSTR|82|setMixedContentMode\nSTR|83|setUseWideViewPort\nSTR|84|setWebChromeClient\nSTR|85|setWebViewClient\nSTR|86|this$0\nSTR|87|toString\nSTR|88|url\nSTR|89|value\nSTR|90|web\nSTR|91|~~D8{\"backend\":\"dex\",\"compilation-mode\":\"debug\",\"has-checksums\":false,\"min-api\":21,\"sha-1\":\"abaab469b5ebd4dd2bb91ba0ed6f45277faae4ca\",\"version\":\"8.6.2-dev\"}\nCLZ|Lcom/cteno/tvshell/MainActivity$1;\nMTH|Lcom/cteno/tvshell/MainActivity$1;|<init>|(Lcom/cteno/tvshell/MainActivity;)V|0x10000\nMTH|Lcom/cteno/tvshell/MainActivity$1;|onPageFinished|(Landroid/webkit/WebView;Ljava/lang/String;)V|0x0001\nMTH|Lcom/cteno/tvshell/MainActivity$1;|onReceivedError|(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|0x0001\nCLZ|Lcom/cteno/tvshell/MainActivity$2;\nMTH|Lcom/cteno/tvshell/MainActivity$2;|<init>|(Lcom/cteno/tvshell/MainActivity;)V|0x10000\nMTH|Lcom/cteno/tvshell/MainActivity$2;|onConsoleMessage|(Landroid/webkit/ConsoleMessage;)Z|0x0001\nCLZ|Lcom/cteno/tvshell/MainActivity;\nMTH|Lcom/cteno/tvshell/MainActivity;|<init>|()V|0x10001\nMTH|Lcom/cteno/tvshell/MainActivity;|onCreate|(Landroid/os/Bundle;)V|0x0004\nMTH|Lcom/cteno/tvshell/MainActivity;|onDestroy|()V|0x0004\nMTH|Lcom/cteno/tvshell/MainActivity;|onKeyDown|(ILandroid/view/KeyEvent;)Z|0x0001\nCLZ|Lcom/cteno/tvshell/R;\nMTH|Lcom/cteno/tvshell/R;|<init>|()V|0x10001\nINSMTH|Lcom/cteno/tvshell/MainActivity$1;|<init>|(Lcom/cteno/tvshell/MainActivity;)V\nINS|0|iput-object\nINS|1|invoke-direct\nINS|2|return-void\n"
+  "HDR|magic|'dex\\n035\\0'\nHDR|checksum|e2f3e81f\nHDR|signature|8557...b5dc\nHDR|file_size|4368\nHDR|header_size|112\nHDR|string_ids_size|92\nHDR|type_ids_size|28\nHDR|proto_ids_size|22\nHDR|field_ids_size|7\nHDR|method_ids_size|43\nHDR|class_defs_size|4\nSTR|0| \nSTR|1| ABI=\nSTR|2|<init>\nSTR|3|BUILD SDK=\nSTR|4|CONSOLE \nSTR|5|CPU_ABI\nSTR|6|DEFAULT_URL\nSTR|7|I\nSTR|8|ILL\nSTR|9|L\nSTR|10|LI\nSTR|11|LL\nSTR|12|LOAD \nSTR|13|Landroid/app/Activity;\nSTR|14|Landroid/content/Context;\nSTR|15|Landroid/content/Intent;\nSTR|16|Landroid/os/Build$VERSION;\nSTR|17|Landroid/os/Build;\nSTR|18|Landroid/os/Bundle;\nSTR|19|Landroid/util/Log;\nSTR|20|Landroid/view/KeyEvent;\nSTR|21|Landroid/view/View;\nSTR|22|Landroid/view/Window;\nSTR|23|Landroid/webkit/ConsoleMessage;\nSTR|24|Landroid/webkit/WebChromeClient;\nSTR|25|Landroid/webkit/WebSettings;\nSTR|26|Landroid/webkit/WebView;\nSTR|27|Landroid/webkit/WebViewClient;\nSTR|28|Lcom/cteno/tvshell/MainActivity$1;\nSTR|29|Lcom/cteno/tvshell/MainActivity$2;\nSTR|30|Lcom/cteno/tvshell/MainActivity;\nSTR|31|Lcom/cteno/tvshell/R;\nSTR|32|Ldalvik/annotation/EnclosingMethod;\nSTR|33|Ldalvik/annotation/InnerClass;\nSTR|34|Ldalvik/annotation/MethodParameters;\nSTR|35|Ljava/lang/Object;\nSTR|36|Ljava/lang/String;\nSTR|37|Ljava/lang/StringBuilder;\nSTR|38|MainActivity.java\nSTR|39|PAGE_ERROR \nSTR|40|PAGE_FINISHED \nSTR|41|R.java\nSTR|42|SDK_INT\nSTR|43|TAG\nSTR|44|TVSHELL\nSTR|45|V\nSTR|46|VI\nSTR|47|VL\nSTR|48|VLILL\nSTR|49|VLL\nSTR|50|VZ\nSTR|51|Z\nSTR|52|ZIL\nSTR|53|ZL\nSTR|54|accessFlags\nSTR|55|addFlags\nSTR|56|append\nSTR|57|destroy\nSTR|58|e\nSTR|59|file:///android_asset/probe.html\nSTR|60|finish\nSTR|61|getIntent\nSTR|62|getSettings\nSTR|63|getStringExtra\nSTR|64|getWindow\nSTR|65|i\nSTR|66|loadUrl\nSTR|67|message\nSTR|68|name\nSTR|69|names\nSTR|70|onConsoleMessage\nSTR|71|onCreate\nSTR|72|onDestroy\nSTR|73|onKeyDown\nSTR|74|onPageFinished\nSTR|75|onReceivedError\nSTR|76|setAllowFileAccess\nSTR|77|setContentView\nSTR|78|setDomStorageEnabled\nSTR|79|setJavaScriptEnabled\nSTR|80|setLoadWithOverviewMode\nSTR|81|setMediaPlaybackRequiresUserGesture\nSTR|82|setMixedContentMode\nSTR|83|setUseWideViewPort\nSTR|84|setWebChromeClient\nSTR|85|setWebViewClient\nSTR|86|this$0\nSTR|87|toString\nSTR|88|url\nSTR|89|value\nSTR|90|web\nSTR|91|~~D8{\"backend\":\"dex\",\"compilation-mode\":\"debug\",\"has-checksums\":false,\"min-api\":21,\"sha-1\":\"abaab469b5ebd4dd2bb91ba0ed6f45277faae4ca\",\"version\":\"8.6.2-dev\"}\nCLZ|Lcom/cteno/tvshell/MainActivity$1;\nMTH|Lcom/cteno/tvshell/MainActivity$1;|<init>|(Lcom/cteno/tvshell/MainActivity;)V|0x10000\nMTH|Lcom/cteno/tvshell/MainActivity$1;|onPageFinished|(Landroid/webkit/WebView;Ljava/lang/String;)V|0x0001\nMTH|Lcom/cteno/tvshell/MainActivity$1;|onReceivedError|(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|0x0001\nCLZ|Lcom/cteno/tvshell/MainActivity$2;\nMTH|Lcom/cteno/tvshell/MainActivity$2;|<init>|(Lcom/cteno/tvshell/MainActivity;)V|0x10000\nMTH|Lcom/cteno/tvshell/MainActivity$2;|onConsoleMessage|(Landroid/webkit/ConsoleMessage;)Z|0x0001\nCLZ|Lcom/cteno/tvshell/MainActivity;\nMTH|Lcom/cteno/tvshell/MainActivity;|<init>|()V|0x10001\nMTH|Lcom/cteno/tvshell/MainActivity;|onCreate|(Landroid/os/Bundle;)V|0x0004\nMTH|Lcom/cteno/tvshell/MainActivity;|onDestroy|()V|0x0004\nMTH|Lcom/cteno/tvshell/MainActivity;|onKeyDown|(ILandroid/view/KeyEvent;)Z|0x0001\nCLZ|Lcom/cteno/tvshell/R;\nMTH|Lcom/cteno/tvshell/R;|<init>|()V|0x10001\nOPS|Lcom/cteno/tvshell/MainActivity$1;|<init>|(Lcom/cteno/tvshell/MainActivity;)V|3|iput-object invoke-direct return-void\nOPS|Lcom/cteno/tvshell/MainActivity$1;|onPageFinished|(Landroid/webkit/WebView;Ljava/lang/String;)V|12|new-instance invoke-direct const-string invoke-virtual move-result-object invoke-virtual move-result-object invoke-virtual move-result-object const-string invoke-static return-void\nOPS|Lcom/cteno/tvshell/MainActivity$1;|onReceivedError|(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|21|new-instance invoke-direct const-string invoke-virtual move-result-object invoke-virtual move-result-object const-string invoke-virtual move-result-object invoke-virtual move-result-object invoke-virtual move-result-object invoke-virtual move-result-object invoke-virtual move-result-object const-string invoke-static return-void\nOPS|Lcom/cteno/tvshell/MainActivity$2;|<init>|(Lcom/cteno/tvshell/MainActivity;)V|3|iput-object invoke-direct return-void\nOPS|Lcom/cteno/tvshell/MainActivity$2;|onConsoleMessage|(Landroid/webkit/ConsoleMessage;)Z|15|new-instance invoke-direct const-string invoke-virtual move-result-object invoke-virtual move-result-object invoke-virtual move-result-object invoke-virtual move-result-object const-string invoke-static const/4 return\nOPS|Lcom/cteno/tvshell/MainActivity;|<init>|()V|2|invoke-direct return-void\nOPS|Lcom/cteno/tvshell/MainActivity;|onCreate|(Landroid/os/Bundle;)V|77|invoke-super invoke-virtual move-result-object const/16 invoke-virtual new-instance invoke-direct iput-object iget-object invoke-virtual move-result-object const/4 invoke-virtual invoke-virtual invoke-virtual invoke-virtual invoke-virtual const/4 invoke-virtual goto move-exception invoke-virtual goto move-exception iget-object new-instance invoke-direct invoke-virtual iget-object new-instance invoke-direct invoke-virtual iget-object invoke-virtual nop invoke-virtual move-result-object if-eqz const-string invoke-virtual move-result-object if-eqz invoke-virtual move-result-object goto const-string new-instance invoke-direct const-string invoke-virtual move-result-object sget invoke-virtual move-result-object const-string invoke-virtual move-result-object sget-object invoke-virtual move-result-object invoke-virtual move-result-object const-string invoke-static new-instance invoke-direct const-string invoke-virtual move-result-object invoke-virtual move-result-object invoke-virtual move-result-object invoke-static iget-object invoke-virtual return-void\nOPS|Lcom/cteno/tvshell/MainActivity;|onDestroy|()V|8|iget-object if-eqz iget-object invoke-virtual const/4 iput-object invoke-super return-void\nOPS|Lcom/cteno/tvshell/MainActivity;|onKeyDown|(ILandroid/view/KeyEvent;)Z|8|const/4 if-ne invoke-virtual const/4 return invoke-super move-result return\nOPS|Lcom/cteno/tvshell/R;|<init>|()V|2|invoke-direct return-void\n"
 }
 // GOLDEN-END dex/tvshell-debug.dexparse.norm.txt
 
 ///|
 // GOLDEN-BEGIN dex/motionshell.dexparse.norm.txt
 fn golden_motionshell_dexparse() -> String {
-  "HDR|magic|'dex\\n035\\0'\nHDR|checksum|12cf266d\nHDR|signature|f0e3...a4af\nHDR|file_size|3148\nHDR|header_size|112\nHDR|string_ids_size|62\nHDR|type_ids_size|20\nHDR|proto_ids_size|16\nHDR|field_ids_size|3\nHDR|method_ids_size|34\nHDR|class_defs_size|2\nSTR|0|<init>\nSTR|1|DEFAULT_URL\nSTR|2|I\nSTR|3|L\nSTR|4|Landroid/app/Activity;\nSTR|5|Landroid/content/Context;\nSTR|6|Landroid/content/Intent;\nSTR|7|Landroid/os/Bundle;\nSTR|8|Landroid/view/KeyEvent;\nSTR|9|Landroid/view/View;\nSTR|10|Landroid/view/Window;\nSTR|11|Landroid/webkit/WebResourceRequest;\nSTR|12|Landroid/webkit/WebSettings;\nSTR|13|Landroid/webkit/WebView;\nSTR|14|Landroid/webkit/WebViewClient;\nSTR|15|Lcom/mg/motionshell/MainActivity$1;\nSTR|16|Lcom/mg/motionshell/MainActivity;\nSTR|17|Ldalvik/annotation/EnclosingMethod;\nSTR|18|Ldalvik/annotation/InnerClass;\nSTR|19|Ldalvik/annotation/MethodParameters;\nSTR|20|Ljava/lang/String;\nSTR|21|MainActivity.java\nSTR|22|V\nSTR|23|VI\nSTR|24|VL\nSTR|25|VZ\nSTR|26|Z\nSTR|27|ZIL\nSTR|28|ZLL\nSTR|29|accessFlags\nSTR|30|addFlags\nSTR|31|canGoBack\nSTR|32|destroy\nSTR|33|getDataString\nSTR|34|getIntent\nSTR|35|getSettings\nSTR|36|getWindow\nSTR|37|goBack\nSTR|38|hideSystemUi\nSTR|39|http://192.168.1.6:8080/tv\nSTR|40|loadUrl\nSTR|41|name\nSTR|42|names\nSTR|43|onCreate\nSTR|44|onDestroy\nSTR|45|onKeyDown\nSTR|46|onWindowFocusChanged\nSTR|47|setCacheMode\nSTR|48|setContentView\nSTR|49|setDomStorageEnabled\nSTR|50|setJavaScriptEnabled\nSTR|51|setLoadWithOverviewMode\nSTR|52|setMediaPlaybackRequiresUserGesture\nSTR|53|setMixedContentMode\nSTR|54|setSystemUiVisibility\nSTR|55|setUseWideViewPort\nSTR|56|setWebViewClient\nSTR|57|shouldOverrideUrlLoading\nSTR|58|this$0\nSTR|59|value\nSTR|60|web\nSTR|61|~~D8{\"backend\":\"dex\",\"compilation-mode\":\"debug\",\"has-checksums\":false,\"min-api\":21,\"sha-1\":\"abaab469b5ebd4dd2bb91ba0ed6f45277faae4ca\",\"version\":\"8.6.2-dev\"}\nCLZ|Lcom/mg/motionshell/MainActivity$1;\nMTH|Lcom/mg/motionshell/MainActivity$1;|<init>|(Lcom/mg/motionshell/MainActivity;)V|0x10000\nMTH|Lcom/mg/motionshell/MainActivity$1;|shouldOverrideUrlLoading|(Landroid/webkit/WebView;Landroid/webkit/WebResourceRequest;)Z|0x0001\nCLZ|Lcom/mg/motionshell/MainActivity;\nMTH|Lcom/mg/motionshell/MainActivity;|<init>|()V|0x10001\nMTH|Lcom/mg/motionshell/MainActivity;|hideSystemUi|()V|0x0002\nMTH|Lcom/mg/motionshell/MainActivity;|onCreate|(Landroid/os/Bundle;)V|0x0004\nMTH|Lcom/mg/motionshell/MainActivity;|onDestroy|()V|0x0004\nMTH|Lcom/mg/motionshell/MainActivity;|onKeyDown|(ILandroid/view/KeyEvent;)Z|0x0001\nMTH|Lcom/mg/motionshell/MainActivity;|onWindowFocusChanged|(Z)V|0x0001\nINSMTH|Lcom/mg/motionshell/MainActivity$1;|<init>|(Lcom/mg/motionshell/MainActivity;)V\nINS|0|iput-object\nINS|1|invoke-direct\nINS|2|return-void\n"
+  "HDR|magic|'dex\\n035\\0'\nHDR|checksum|12cf266d\nHDR|signature|f0e3...a4af\nHDR|file_size|3148\nHDR|header_size|112\nHDR|string_ids_size|62\nHDR|type_ids_size|20\nHDR|proto_ids_size|16\nHDR|field_ids_size|3\nHDR|method_ids_size|34\nHDR|class_defs_size|2\nSTR|0|<init>\nSTR|1|DEFAULT_URL\nSTR|2|I\nSTR|3|L\nSTR|4|Landroid/app/Activity;\nSTR|5|Landroid/content/Context;\nSTR|6|Landroid/content/Intent;\nSTR|7|Landroid/os/Bundle;\nSTR|8|Landroid/view/KeyEvent;\nSTR|9|Landroid/view/View;\nSTR|10|Landroid/view/Window;\nSTR|11|Landroid/webkit/WebResourceRequest;\nSTR|12|Landroid/webkit/WebSettings;\nSTR|13|Landroid/webkit/WebView;\nSTR|14|Landroid/webkit/WebViewClient;\nSTR|15|Lcom/mg/motionshell/MainActivity$1;\nSTR|16|Lcom/mg/motionshell/MainActivity;\nSTR|17|Ldalvik/annotation/EnclosingMethod;\nSTR|18|Ldalvik/annotation/InnerClass;\nSTR|19|Ldalvik/annotation/MethodParameters;\nSTR|20|Ljava/lang/String;\nSTR|21|MainActivity.java\nSTR|22|V\nSTR|23|VI\nSTR|24|VL\nSTR|25|VZ\nSTR|26|Z\nSTR|27|ZIL\nSTR|28|ZLL\nSTR|29|accessFlags\nSTR|30|addFlags\nSTR|31|canGoBack\nSTR|32|destroy\nSTR|33|getDataString\nSTR|34|getIntent\nSTR|35|getSettings\nSTR|36|getWindow\nSTR|37|goBack\nSTR|38|hideSystemUi\nSTR|39|http://192.168.1.6:8080/tv\nSTR|40|loadUrl\nSTR|41|name\nSTR|42|names\nSTR|43|onCreate\nSTR|44|onDestroy\nSTR|45|onKeyDown\nSTR|46|onWindowFocusChanged\nSTR|47|setCacheMode\nSTR|48|setContentView\nSTR|49|setDomStorageEnabled\nSTR|50|setJavaScriptEnabled\nSTR|51|setLoadWithOverviewMode\nSTR|52|setMediaPlaybackRequiresUserGesture\nSTR|53|setMixedContentMode\nSTR|54|setSystemUiVisibility\nSTR|55|setUseWideViewPort\nSTR|56|setWebViewClient\nSTR|57|shouldOverrideUrlLoading\nSTR|58|this$0\nSTR|59|value\nSTR|60|web\nSTR|61|~~D8{\"backend\":\"dex\",\"compilation-mode\":\"debug\",\"has-checksums\":false,\"min-api\":21,\"sha-1\":\"abaab469b5ebd4dd2bb91ba0ed6f45277faae4ca\",\"version\":\"8.6.2-dev\"}\nCLZ|Lcom/mg/motionshell/MainActivity$1;\nMTH|Lcom/mg/motionshell/MainActivity$1;|<init>|(Lcom/mg/motionshell/MainActivity;)V|0x10000\nMTH|Lcom/mg/motionshell/MainActivity$1;|shouldOverrideUrlLoading|(Landroid/webkit/WebView;Landroid/webkit/WebResourceRequest;)Z|0x0001\nCLZ|Lcom/mg/motionshell/MainActivity;\nMTH|Lcom/mg/motionshell/MainActivity;|<init>|()V|0x10001\nMTH|Lcom/mg/motionshell/MainActivity;|hideSystemUi|()V|0x0002\nMTH|Lcom/mg/motionshell/MainActivity;|onCreate|(Landroid/os/Bundle;)V|0x0004\nMTH|Lcom/mg/motionshell/MainActivity;|onDestroy|()V|0x0004\nMTH|Lcom/mg/motionshell/MainActivity;|onKeyDown|(ILandroid/view/KeyEvent;)Z|0x0001\nMTH|Lcom/mg/motionshell/MainActivity;|onWindowFocusChanged|(Z)V|0x0001\nOPS|Lcom/mg/motionshell/MainActivity$1;|<init>|(Lcom/mg/motionshell/MainActivity;)V|3|iput-object invoke-direct return-void\nOPS|Lcom/mg/motionshell/MainActivity$1;|shouldOverrideUrlLoading|(Landroid/webkit/WebView;Landroid/webkit/WebResourceRequest;)Z|2|const/4 return\nOPS|Lcom/mg/motionshell/MainActivity;|<init>|()V|2|invoke-direct return-void\nOPS|Lcom/mg/motionshell/MainActivity;|hideSystemUi|()V|4|iget-object const/16 invoke-virtual return-void\nOPS|Lcom/mg/motionshell/MainActivity;|onCreate|(Landroid/os/Bundle;)V|42|invoke-super invoke-virtual move-result-object const/16 invoke-virtual new-instance invoke-direct iput-object iget-object invoke-virtual invoke-direct iget-object invoke-virtual move-result-object const/4 invoke-virtual invoke-virtual const/4 invoke-virtual invoke-virtual invoke-virtual invoke-virtual const/4 invoke-virtual iget-object new-instance invoke-direct invoke-virtual nop invoke-virtual move-result-object if-eqz invoke-virtual move-result-object if-eqz invoke-virtual move-result-object goto const-string iget-object invoke-virtual return-void\nOPS|Lcom/mg/motionshell/MainActivity;|onDestroy|()V|8|iget-object if-eqz iget-object invoke-virtual const/4 iput-object invoke-super return-void\nOPS|Lcom/mg/motionshell/MainActivity;|onKeyDown|(ILandroid/view/KeyEvent;)Z|15|const/4 if-ne iget-object if-eqz iget-object invoke-virtual move-result if-eqz iget-object invoke-virtual const/4 return invoke-super move-result return\nOPS|Lcom/mg/motionshell/MainActivity;|onWindowFocusChanged|(Z)V|4|invoke-super if-eqz invoke-direct return-void\n"
 }
 // GOLDEN-END dex/motionshell.dexparse.norm.txt
+
+///|
+/// L1 受控构建样本（WP-4 2026-11-07；aapt2/d8/apksigner 自产多 dex APK，见
+/// fixtures/build-fixtures.ps1）：fx-multidex-v2v3.apk -> classes.dex
+///（2116 字节，DEX 035，桶 1：FxIface/FxMain/FxMultiA/FxMultiB）。
+/// 性质：**受控自产**（工具构建，非真实第三方，也非程序化字节拼装）。
+// FIXTURE-BEGIN dex/tests/fixtures/fx-multidex.classes.dex
+fn fixture_fx_multidex_dex() -> Bytes {
+  b"\x64\x65\x78\x0a\x30\x33\x35\x00\x12\x26\x34\xd7\x77\x1f\x93\xde\x67\x6b\x6a\x1c\xe9\x42\xba\x4c\xad\x5e\x76\x0b\xea\xf1\x7c\xfd\x44\x08\x00\x00\x70\x00\x00\x00\x78\x56\x34\x12\x00\x00\x00\x00\x00\x00\x00\x00\xa4\x07\x00\x00\x2b\x00\x00\x00\x70\x00\x00\x00\x0c\x00\x00\x00\x1c\x01\x00\x00\x09\x00\x00\x00\x4c\x01\x00\x00\x03\x00\x00\x00\xb8\x01\x00\x00\x16\x00\x00\x00\xd0\x01\x00\x00\x04\x00\x00\x00\x80\x02\x00\x00\x44\x05\x00\x00\x00\x03\x00\x00\xfa\x04\x00\x00\x04\x05\x00\x00\x0c\x05\x00\x00\x0f\x05\x00\x00\x14\x05\x00\x00\x22\x05\x00\x00\x2f\x05\x00\x00\x3e\x05\x00\x00\x4d\x05\x00\x00\x50\x05\x00\x00\x54\x05\x00\x00\x59\x05\x00\x00\x5c\x05\x00\x00\x60\x05\x00\x00\x64\x05\x00\x00\x68\x05\x00\x00\x80\x05\x00\x00\x95\x05\x00\x00\xa9\x05\x00\x00\xbc\x05\x00\x00\xd1\x05\x00\x00\xe6\x05\x00\x00\xfa\x05\x00\x00\x0e\x06\x00\x00\x29\x06\x00\x00\x2c\x06\x00\x00\x30\x06\x00\x00\x34\x06\x00\x00\x39\x06\x00\x00\x41\x06\x00\x00\x48\x06\x00\x00\x4e\x06\x00\x00\x58\x06\x00\x00\x63\x06\x00\x00\x6c\x06\x00\x00\x76\x06\x00\x00\x7d\x06\x00\x00\x87\x06\x00\x00\x8c\x06\x00\x00\x91\x06\x00\x00\x9b\x06\x00\x00\xa6\x06\x00\x00\xad\x06\x00\x00\x02\x00\x00\x00\x08\x00\x00\x00\x0f\x00\x00\x00\x10\x00\x00\x00\x11\x00\x00\x00\x12\x00\x00\x00\x13\x00\x00\x00\x14\x00\x00\x00\x15\x00\x00\x00\x16\x00\x00\x00\x17\x00\x00\x00\x18\x00\x00\x00\x09\x00\x00\x00\x01\x00\x00\x00\xd4\x04\x00\x00\x0a\x00\x00\x00\x01\x00\x00\x00\xdc\x04\x00\x00\x0b\x00\x00\x00\x09\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x0a\x00\x00\x00\xe4\x04\x00\x00\x0d\x00\x00\x00\x0a\x00\x00\x00\xd4\x04\x00\x00\x0e\x00\x00\x00\x0a\x00\x00\x00\xec\x04\x00\x00\x18\x00\x00\x00\x0b\x00\x00\x00\x00\x00\x00\x00\x19\x00\x00\x00\x0b\x00\x00\x00\xd4\x04\x00\x00\x1a\x00\x00\x00\x0b\x00\x00\x00\xf4\x04\x00\x00\x06\x00\x01\x00\x21\x00\x00\x00\x06\x00\x09\x00\x26\x00\x00\x00\x06\x00\x01\x00\x29\x00\x00\x00\x02\x00\x06\x00\x01\x00\x00\x00\x02\x00\x08\x00\x24\x00\x00\x00\x04\x00\x02\x00\x23\x00\x00\x00\x04\x00\x00\x00\x25\x00\x00\x00\x05\x00\x06\x00\x01\x00\x00\x00\x05\x00\x08\x00\x24\x00\x00\x00\x06\x00\x06\x00\x00\x00\x00\x00\x06\x00\x07\x00\x01\x00\x00\x00\x06\x00\x01\x00\x1b\x00\x00\x00\x06\x00\x07\x00\x1e\x00\x00\x00\x06\x00\x00\x00\x1f\x00\x00\x00\x06\x00\x00\x00\x20\x00\x00\x00\x06\x00\x02\x00\x22\x00\x00\x00\x07\x00\x06\x00\x01\x00\x00\x00\x07\x00\x00\x00\x1d\x00\x00\x00\x07\x00\x00\x00\x28\x00\x00\x00\x08\x00\x06\x00\x01\x00\x00\x00\x0a\x00\x06\x00\x01\x00\x00\x00\x0a\x00\x03\x00\x1c\x00\x00\x00\x0a\x00\x04\x00\x1c\x00\x00\x00\x0a\x00\x05\x00\x1c\x00\x00\x00\x0a\x00\x02\x00\x27\x00\x00\x00\x04\x00\x00\x00\x01\x06\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x4c\x07\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x58\x07\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x66\x07\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x01\x04\x00\x00\x08\x00\x00\x00\xcc\x04\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x90\x07\x00\x00\x00\x00\x00\x00\x01\x00\x01\x00\x01\x00\x00\x00\x84\x04\x00\x00\x04\x00\x00\x00\x70\x10\x00\x00\x00\x00\x0e\x00\x03\x00\x02\x00\x02\x00\x00\x00\x88\x04\x00\x00\x0e\x00\x00\x00\x6f\x20\x01\x00\x21\x00\x22\x02\x06\x00\x12\x70\x70\x20\x07\x00\x02\x00\x12\x20\x6e\x20\x09\x00\x02\x00\x0e\x00\x03\x00\x03\x00\x00\x00\x00\x00\x90\x04\x00\x00\x02\x00\x00\x00\xb0\x21\x0f\x01\x02\x00\x02\x00\x00\x00\x00\x00\x96\x04\x00\x00\x0a\x00\x00\x00\x3d\x01\x04\x00\x12\x11\x0f\x01\x39\x01\x04\x00\x12\x01\x0f\x01\x12\xf1\x0f\x01\x03\x00\x02\x00\x00\x00\x00\x00\x9f\x04\x00\x00\x09\x00\x00\x00\x12\x00\x3d\x02\x07\x00\xd8\x02\x02\xff\xd8\x00\x00\x01\x28\xfa\x0f\x00\x00\x00\x03\x00\x01\x00\x02\x00\x00\x00\xa8\x04\x00\x00\x19\x00\x00\x00\x22\x00\x0a\x00\x70\x10\x11\x00\x00\x00\x54\x21\x01\x00\x6e\x20\x14\x00\x10\x00\x13\x01\x3a\x00\x6e\x20\x12\x00\x10\x00\x52\x21\x02\x00\x6e\x20\x13\x00\x10\x00\x6e\x10\x15\x00\x00\x00\x0c\x00\x11\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\xb0\x04\x00\x00\x04\x00\x00\x00\x12\x30\x67\x00\x00\x00\x0e\x00\x03\x00\x02\x00\x01\x00\x00\x00\xb4\x04\x00\x00\x0a\x00\x00\x00\x70\x10\x10\x00\x01\x00\x1a\x00\x03\x00\x5b\x10\x01\x00\x59\x12\x02\x00\x0e\x00\x03\x00\x02\x00\x00\x00\x00\x00\xbc\x04\x00\x00\x0d\x00\x00\x00\x60\x00\x00\x00\xb0\x20\x67\x00\x00\x00\x52\x10\x02\x00\xda\x02\x02\x02\xb0\x20\x59\x10\x02\x00\x0e\x00\x00\x00\x02\x00\x02\x00\x02\x00\x00\x00\xc3\x04\x00\x00\x07\x00\x00\x00\x6e\x20\x0f\x00\x10\x00\x0a\x01\xd8\x01\x01\x01\x0f\x01\x00\x00\x01\x00\x01\x00\x01\x00\x00\x00\xc8\x04\x00\x00\x04\x00\x00\x00\x70\x10\x10\x00\x00\x00\x0e\x00\x0c\x00\x0e\x00\x0f\x01\x00\x0e\x3c\x69\x4b\x00\x17\x02\x00\x00\x0e\x00\x1b\x01\x00\x0e\x2d\x2d\x2d\x2e\x00\x32\x01\x00\x0e\x1e\x2d\x2d\x3d\x00\x2a\x00\x0e\x5a\x5a\x5a\x5a\x00\x0e\x00\x0e\x00\x12\x01\x00\x0e\x39\x4d\x2d\x00\x25\x01\x00\x0e\x5a\x78\x00\x0c\x01\x00\x0e\x00\x08\x00\x0e\x00\x01\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x01\x00\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x09\x00\x00\x00\x01\x00\x00\x00\x03\x00\x08\x3c\x63\x6c\x69\x6e\x69\x74\x3e\x00\x06\x3c\x69\x6e\x69\x74\x3e\x00\x01\x43\x00\x03\x46\x58\x41\x00\x0c\x46\x78\x49\x66\x61\x63\x65\x2e\x6a\x61\x76\x61\x00\x0b\x46\x78\x4d\x61\x69\x6e\x2e\x6a\x61\x76\x61\x00\x0d\x46\x78\x4d\x75\x6c\x74\x69\x41\x2e\x6a\x61\x76\x61\x00\x0d\x46\x78\x4d\x75\x6c\x74\x69\x42\x2e\x6a\x61\x76\x61\x00\x01\x49\x00\x02\x49\x49\x00\x03\x49\x49\x49\x00\x01\x4c\x00\x02\x4c\x43\x00\x02\x4c\x49\x00\x02\x4c\x4c\x00\x16\x4c\x61\x6e\x64\x72\x6f\x69\x64\x2f\x61\x70\x70\x2f\x41\x63\x74\x69\x76\x69\x74\x79\x3b\x00\x13\x4c\x61\x6e\x64\x72\x6f\x69\x64\x2f\x6f\x73\x2f\x42\x75\x6e\x64\x6c\x65\x3b\x00\x12\x4c\x66\x78\x2f\x6d\x75\x6c\x74\x69\x2f\x46\x78\x49\x66\x61\x63\x65\x3b\x00\x11\x4c\x66\x78\x2f\x6d\x75\x6c\x74\x69\x2f\x46\x78\x4d\x61\x69\x6e\x3b\x00\x13\x4c\x66\x78\x2f\x6d\x75\x6c\x74\x69\x2f\x46\x78\x4d\x75\x6c\x74\x69\x41\x3b\x00\x13\x4c\x66\x78\x2f\x6d\x75\x6c\x74\x69\x2f\x46\x78\x4d\x75\x6c\x74\x69\x42\x3b\x00\x12\x4c\x6a\x61\x76\x61\x2f\x6c\x61\x6e\x67\x2f\x4f\x62\x6a\x65\x63\x74\x3b\x00\x12\x4c\x6a\x61\x76\x61\x2f\x6c\x61\x6e\x67\x2f\x53\x74\x72\x69\x6e\x67\x3b\x00\x19\x4c\x6a\x61\x76\x61\x2f\x6c\x61\x6e\x67\x2f\x53\x74\x72\x69\x6e\x67\x42\x75\x69\x6c\x64\x65\x72\x3b\x00\x01\x56\x00\x02\x56\x49\x00\x02\x56\x4c\x00\x03\x61\x64\x64\x00\x06\x61\x70\x70\x65\x6e\x64\x00\x05\x61\x70\x70\x6c\x79\x00\x04\x62\x75\x6d\x70\x00\x08\x63\x6c\x61\x73\x73\x69\x66\x79\x00\x09\x63\x6f\x75\x6e\x74\x44\x6f\x77\x6e\x00\x07\x63\x6f\x75\x6e\x74\x65\x72\x00\x08\x64\x65\x73\x63\x72\x69\x62\x65\x00\x05\x6c\x61\x62\x65\x6c\x00\x08\x6f\x6e\x43\x72\x65\x61\x74\x65\x00\x03\x72\x75\x6e\x00\x03\x74\x61\x67\x00\x08\x74\x6f\x53\x74\x72\x69\x6e\x67\x00\x09\x74\x72\x61\x6e\x73\x66\x6f\x72\x6d\x00\x05\x76\x61\x6c\x75\x65\x00\x9c\x01\x7e\x7e\x44\x38\x7b\x22\x62\x61\x63\x6b\x65\x6e\x64\x22\x3a\x22\x64\x65\x78\x22\x2c\x22\x63\x6f\x6d\x70\x69\x6c\x61\x74\x69\x6f\x6e\x2d\x6d\x6f\x64\x65\x22\x3a\x22\x64\x65\x62\x75\x67\x22\x2c\x22\x68\x61\x73\x2d\x63\x68\x65\x63\x6b\x73\x75\x6d\x73\x22\x3a\x66\x61\x6c\x73\x65\x2c\x22\x6d\x69\x6e\x2d\x61\x70\x69\x22\x3a\x32\x31\x2c\x22\x73\x68\x61\x2d\x31\x22\x3a\x22\x61\x62\x61\x61\x62\x34\x36\x39\x62\x35\x65\x62\x64\x34\x64\x64\x32\x62\x62\x39\x31\x62\x61\x30\x65\x64\x36\x66\x34\x35\x32\x37\x37\x66\x61\x61\x65\x34\x63\x61\x22\x2c\x22\x76\x65\x72\x73\x69\x6f\x6e\x22\x3a\x22\x38\x2e\x36\x2e\x32\x2d\x64\x65\x76\x22\x7d\x00\x00\x00\x00\x02\x02\x81\x08\x00\x01\x81\x08\x00\x00\x00\x01\x01\x04\x81\x80\x04\x80\x06\x05\x04\x98\x06\x01\x02\x02\x05\x00\x09\x01\x02\x01\x01\x06\x88\x80\x04\xe4\x07\x01\x81\x80\x04\xfc\x07\x08\x01\xc4\x06\x01\x01\xa0\x08\x01\x01\xd8\x06\x01\x01\xfc\x06\x01\x01\xa0\x07\x00\x00\x01\x02\x0d\x81\x80\x04\xec\x08\x0e\x01\xcc\x08\x01\x81\x08\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x2b\x00\x00\x00\x70\x00\x00\x00\x02\x00\x00\x00\x0c\x00\x00\x00\x1c\x01\x00\x00\x03\x00\x00\x00\x09\x00\x00\x00\x4c\x01\x00\x00\x04\x00\x00\x00\x03\x00\x00\x00\xb8\x01\x00\x00\x05\x00\x00\x00\x16\x00\x00\x00\xd0\x01\x00\x00\x06\x00\x00\x00\x04\x00\x00\x00\x80\x02\x00\x00\x01\x20\x00\x00\x0b\x00\x00\x00\x00\x03\x00\x00\x03\x20\x00\x00\x0b\x00\x00\x00\x84\x04\x00\x00\x01\x10\x00\x00\x06\x00\x00\x00\xcc\x04\x00\x00\x02\x20\x00\x00\x2b\x00\x00\x00\xfa\x04\x00\x00\x00\x20\x00\x00\x04\x00\x00\x00\x4c\x07\x00\x00\x00\x10\x00\x00\x01\x00\x00\x00\xa4\x07\x00\x00"
+}
+// FIXTURE-END dex/tests/fixtures/fx-multidex.classes.dex
+
+///|
+/// L1 受控构建样本：fx-multidex-v2v3.apk -> classes2.dex（1640 字节，桶 2：FxMultiC/FxMultiD）。
+/// 覆盖多 dex APK 的第二个 DEX 条目（classes2.dex）。
+// FIXTURE-BEGIN dex/tests/fixtures/fx-multidex.classes2.dex
+fn fixture_fx_multidex2_dex() -> Bytes {
+  b"\x64\x65\x78\x0a\x30\x33\x35\x00\x98\xd8\x24\x28\x7b\x5c\x06\x2b\x1e\x16\x3f\xab\xc6\x88\xbb\x24\x40\x34\x36\x2a\x48\xab\x61\x9a\x68\x06\x00\x00\x70\x00\x00\x00\x78\x56\x34\x12\x00\x00\x00\x00\x00\x00\x00\x00\xc8\x05\x00\x00\x23\x00\x00\x00\x70\x00\x00\x00\x0b\x00\x00\x00\xfc\x00\x00\x00\x0b\x00\x00\x00\x28\x01\x00\x00\x02\x00\x00\x00\xac\x01\x00\x00\x0d\x00\x00\x00\xbc\x01\x00\x00\x02\x00\x00\x00\x24\x02\x00\x00\x04\x04\x00\x00\x64\x02\x00\x00\xd8\x03\x00\x00\xe0\x03\x00\x00\xe3\x03\x00\x00\xe7\x03\x00\x00\xf6\x03\x00\x00\x05\x04\x00\x00\x08\x04\x00\x00\x0c\x04\x00\x00\x0f\x04\x00\x00\x12\x04\x00\x00\x16\x04\x00\x00\x1a\x04\x00\x00\x1f\x04\x00\x00\x38\x04\x00\x00\x51\x04\x00\x00\x65\x04\x00\x00\x79\x04\x00\x00\x94\x04\x00\x00\x97\x04\x00\x00\x9c\x04\x00\x00\x9f\x04\x00\x00\xa3\x04\x00\x00\xa7\x04\x00\x00\xac\x04\x00\x00\xb4\x04\x00\x00\xbb\x04\x00\x00\xc2\x04\x00\x00\xc6\x04\x00\x00\xcc\x04\x00\x00\xd4\x04\x00\x00\xdb\x04\x00\x00\xe3\x04\x00\x00\xec\x04\x00\x00\xf6\x04\x00\x00\xf9\x04\x00\x00\x01\x00\x00\x00\x05\x00\x00\x00\x07\x00\x00\x00\x0c\x00\x00\x00\x0d\x00\x00\x00\x0e\x00\x00\x00\x0f\x00\x00\x00\x10\x00\x00\x00\x11\x00\x00\x00\x13\x00\x00\x00\x15\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\xb0\x03\x00\x00\x05\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\xb8\x03\x00\x00\x07\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x0b\x00\x00\x00\x06\x00\x00\x00\xc0\x03\x00\x00\x0a\x00\x00\x00\x07\x00\x00\x00\xc8\x03\x00\x00\x11\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x12\x00\x00\x00\x08\x00\x00\x00\xd0\x03\x00\x00\x14\x00\x00\x00\x09\x00\x00\x00\xc8\x03\x00\x00\x09\x00\x00\x00\x0a\x00\x00\x00\xb8\x03\x00\x00\x03\x00\x02\x00\x1a\x00\x00\x00\x03\x00\x00\x00\x1d\x00\x00\x00\x03\x00\x08\x00\x00\x00\x00\x00\x03\x00\x09\x00\x18\x00\x00\x00\x03\x00\x03\x00\x19\x00\x00\x00\x03\x00\x00\x00\x1e\x00\x00\x00\x04\x00\x07\x00\x00\x00\x00\x00\x04\x00\x02\x00\x16\x00\x00\x00\x04\x00\x05\x00\x1b\x00\x00\x00\x04\x00\x0a\x00\x1f\x00\x00\x00\x05\x00\x07\x00\x00\x00\x00\x00\x06\x00\x01\x00\x1c\x00\x00\x00\x07\x00\x07\x00\x00\x00\x00\x00\x07\x00\x06\x00\x17\x00\x00\x00\x07\x00\x04\x00\x20\x00\x00\x00\x03\x00\x00\x00\x01\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x98\x05\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\xb2\x05\x00\x00\x00\x00\x00\x00\x03\x00\x02\x00\x01\x00\x00\x00\x84\x03\x00\x00\x0d\x00\x00\x00\x38\x02\x0b\x00\x6e\x10\x09\x00\x02\x00\x0a\x02\x12\x20\x37\x02\x04\x00\x12\x12\x28\x02\x12\x02\x0f\x02\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x89\x03\x00\x00\x08\x00\x00\x00\x53\x20\x01\x00\xad\x03\x03\x00\x19\x00\x04\x40\xcb\x03\x10\x03\x03\x00\x01\x00\x00\x00\x00\x00\x8e\x03\x00\x00\x03\x00\x00\x00\x53\x20\x00\x00\x10\x00\x00\x00\x05\x00\x05\x00\x01\x00\x00\x00\x92\x03\x00\x00\x08\x00\x00\x00\x70\x10\x08\x00\x00\x00\x5a\x01\x00\x00\x5a\x03\x01\x00\x0e\x00\x01\x00\x01\x00\x00\x00\x00\x00\x89\x03\x00\x00\x04\x00\x00\x00\x3b\x00\x03\x00\x7b\x00\x0f\x00\x04\x00\x01\x00\x00\x00\x00\x00\x9b\x03\x00\x00\x0d\x00\x00\x00\x23\x30\x0a\x00\x12\x01\x35\x31\x09\x00\x92\x02\x01\x01\x4b\x02\x00\x01\xd8\x01\x01\x01\x28\xf8\x11\x00\x00\x00\x03\x00\x02\x00\x02\x00\x00\x00\xa4\x03\x00\x00\x18\x00\x00\x00\x22\x00\x07\x00\x70\x10\x0a\x00\x00\x00\x6e\x20\x0b\x00\x10\x00\x0c\x01\x1a\x00\x21\x00\x6e\x20\x0b\x00\x01\x00\x0c\x01\x6e\x20\x0b\x00\x21\x00\x0c\x01\x6e\x10\x0c\x00\x01\x00\x0c\x01\x11\x01\x01\x00\x01\x00\x01\x00\x00\x00\xaa\x03\x00\x00\x04\x00\x00\x00\x70\x10\x08\x00\x00\x00\x0e\x00\x1b\x01\x00\x0e\x00\x17\x01\x00\x0e\x00\x13\x00\x0e\x00\x0d\x02\x00\x00\x0e\x3c\x2d\x2d\x00\x0f\x01\x00\x0e\x2d\x3c\x49\x3e\x00\x0b\x02\x00\x00\x0e\x00\x09\x00\x0e\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x06\x00\x06\x00\x01\x00\x00\x00\x06\x00\x00\x00\x02\x00\x00\x00\x02\x00\x00\x00\x06\x3c\x69\x6e\x69\x74\x3e\x00\x01\x44\x00\x02\x44\x44\x00\x0d\x46\x78\x4d\x75\x6c\x74\x69\x43\x2e\x6a\x61\x76\x61\x00\x0d\x46\x78\x4d\x75\x6c\x74\x69\x44\x2e\x6a\x61\x76\x61\x00\x01\x49\x00\x02\x49\x49\x00\x01\x4a\x00\x01\x4c\x00\x02\x4c\x49\x00\x02\x4c\x4c\x00\x03\x4c\x4c\x4c\x00\x17\x4c\x66\x78\x2f\x6d\x75\x6c\x74\x69\x2f\x73\x65\x63\x2f\x46\x78\x4d\x75\x6c\x74\x69\x43\x3b\x00\x17\x4c\x66\x78\x2f\x6d\x75\x6c\x74\x69\x2f\x73\x65\x63\x2f\x46\x78\x4d\x75\x6c\x74\x69\x44\x3b\x00\x12\x4c\x6a\x61\x76\x61\x2f\x6c\x61\x6e\x67\x2f\x4f\x62\x6a\x65\x63\x74\x3b\x00\x12\x4c\x6a\x61\x76\x61\x2f\x6c\x61\x6e\x67\x2f\x53\x74\x72\x69\x6e\x67\x3b\x00\x19\x4c\x6a\x61\x76\x61\x2f\x6c\x61\x6e\x67\x2f\x53\x74\x72\x69\x6e\x67\x42\x75\x69\x6c\x64\x65\x72\x3b\x00\x01\x56\x00\x03\x56\x4a\x44\x00\x01\x5a\x00\x02\x5a\x4c\x00\x02\x5b\x49\x00\x03\x61\x62\x73\x00\x06\x61\x70\x70\x65\x6e\x64\x00\x05\x63\x68\x65\x63\x6b\x00\x05\x67\x65\x74\x49\x64\x00\x02\x69\x64\x00\x04\x6a\x6f\x69\x6e\x00\x06\x6c\x65\x6e\x67\x74\x68\x00\x05\x73\x63\x61\x6c\x65\x00\x06\x73\x63\x61\x6c\x65\x64\x00\x07\x73\x71\x75\x61\x72\x65\x73\x00\x08\x74\x6f\x53\x74\x72\x69\x6e\x67\x00\x01\x7c\x00\x9c\x01\x7e\x7e\x44\x38\x7b\x22\x62\x61\x63\x6b\x65\x6e\x64\x22\x3a\x22\x64\x65\x78\x22\x2c\x22\x63\x6f\x6d\x70\x69\x6c\x61\x74\x69\x6f\x6e\x2d\x6d\x6f\x64\x65\x22\x3a\x22\x64\x65\x62\x75\x67\x22\x2c\x22\x68\x61\x73\x2d\x63\x68\x65\x63\x6b\x73\x75\x6d\x73\x22\x3a\x66\x61\x6c\x73\x65\x2c\x22\x6d\x69\x6e\x2d\x61\x70\x69\x22\x3a\x32\x31\x2c\x22\x73\x68\x61\x2d\x31\x22\x3a\x22\x61\x62\x61\x61\x62\x34\x36\x39\x62\x35\x65\x62\x64\x34\x64\x64\x32\x62\x62\x39\x31\x62\x61\x30\x65\x64\x36\x66\x34\x35\x32\x37\x37\x66\x61\x61\x65\x34\x63\x61\x22\x2c\x22\x76\x65\x72\x73\x69\x6f\x6e\x22\x3a\x22\x38\x2e\x36\x2e\x32\x2d\x64\x65\x76\x22\x7d\x00\x00\x02\x01\x03\x00\x12\x01\x02\x00\x81\x80\x04\xc8\x05\x01\x01\xe4\x04\x01\x01\xb0\x05\x01\x01\x90\x05\x00\x00\x04\x00\x04\x81\x80\x04\xec\x06\x01\x09\xe8\x05\x01\x09\xac\x06\x01\x09\x80\x06\x0d\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x23\x00\x00\x00\x70\x00\x00\x00\x02\x00\x00\x00\x0b\x00\x00\x00\xfc\x00\x00\x00\x03\x00\x00\x00\x0b\x00\x00\x00\x28\x01\x00\x00\x04\x00\x00\x00\x02\x00\x00\x00\xac\x01\x00\x00\x05\x00\x00\x00\x0d\x00\x00\x00\xbc\x01\x00\x00\x06\x00\x00\x00\x02\x00\x00\x00\x24\x02\x00\x00\x01\x20\x00\x00\x08\x00\x00\x00\x64\x02\x00\x00\x03\x20\x00\x00\x07\x00\x00\x00\x84\x03\x00\x00\x01\x10\x00\x00\x05\x00\x00\x00\xb0\x03\x00\x00\x02\x20\x00\x00\x23\x00\x00\x00\xd8\x03\x00\x00\x00\x20\x00\x00\x02\x00\x00\x00\x98\x05\x00\x00\x00\x10\x00\x00\x01\x00\x00\x00\xc8\x05\x00\x00"
+}
+// FIXTURE-END dex/tests/fixtures/fx-multidex.classes2.dex
+
+///|
+// GOLDEN-BEGIN dex/fx-multidex.dexparse.norm.txt
+fn golden_fx_multidex_dexparse() -> String {
+  "HDR|magic|'dex\\n035\\0'\nHDR|checksum|d7342612\nHDR|signature|771f...7cfd\nHDR|file_size|2116\nHDR|header_size|112\nHDR|string_ids_size|43\nHDR|type_ids_size|12\nHDR|proto_ids_size|9\nHDR|field_ids_size|3\nHDR|method_ids_size|22\nHDR|class_defs_size|4\nSTR|0|<clinit>\nSTR|1|<init>\nSTR|2|C\nSTR|3|FXA\nSTR|4|FxIface.java\nSTR|5|FxMain.java\nSTR|6|FxMultiA.java\nSTR|7|FxMultiB.java\nSTR|8|I\nSTR|9|II\nSTR|10|III\nSTR|11|L\nSTR|12|LC\nSTR|13|LI\nSTR|14|LL\nSTR|15|Landroid/app/Activity;\nSTR|16|Landroid/os/Bundle;\nSTR|17|Lfx/multi/FxIface;\nSTR|18|Lfx/multi/FxMain;\nSTR|19|Lfx/multi/FxMultiA;\nSTR|20|Lfx/multi/FxMultiB;\nSTR|21|Ljava/lang/Object;\nSTR|22|Ljava/lang/String;\nSTR|23|Ljava/lang/StringBuilder;\nSTR|24|V\nSTR|25|VI\nSTR|26|VL\nSTR|27|add\nSTR|28|append\nSTR|29|apply\nSTR|30|bump\nSTR|31|classify\nSTR|32|countDown\nSTR|33|counter\nSTR|34|describe\nSTR|35|label\nSTR|36|onCreate\nSTR|37|run\nSTR|38|tag\nSTR|39|toString\nSTR|40|transform\nSTR|41|value\nSTR|42|~~D8{\"backend\":\"dex\",\"compilation-mode\":\"debug\",\"has-checksums\":false,\"min-api\":21,\"sha-1\":\"abaab469b5ebd4dd2bb91ba0ed6f45277faae4ca\",\"version\":\"8.6.2-dev\"}\nCLZ|Lfx/multi/FxIface;\nMTH|Lfx/multi/FxIface;|label|()Ljava/lang/String;|0x0401\nMTH|Lfx/multi/FxIface;|run|(I)I|0x0401\nCLZ|Lfx/multi/FxMain;\nMTH|Lfx/multi/FxMain;|<init>|()V|0x10001\nMTH|Lfx/multi/FxMain;|onCreate|(Landroid/os/Bundle;)V|0x0004\nCLZ|Lfx/multi/FxMultiA;\nMTH|Lfx/multi/FxMultiA;|<clinit>|()V|0x10008\nMTH|Lfx/multi/FxMultiA;|<init>|(I)V|0x10001\nMTH|Lfx/multi/FxMultiA;|add|(II)I|0x0001\nMTH|Lfx/multi/FxMultiA;|bump|(I)V|0x0001\nMTH|Lfx/multi/FxMultiA;|classify|(I)I|0x0001\nMTH|Lfx/multi/FxMultiA;|countDown|(I)I|0x0001\nMTH|Lfx/multi/FxMultiA;|describe|()Ljava/lang/String;|0x0001\nCLZ|Lfx/multi/FxMultiB;\nMTH|Lfx/multi/FxMultiB;|<init>|()V|0x10001\nMTH|Lfx/multi/FxMultiB;|apply|(I)I|0x0001\nMTH|Lfx/multi/FxMultiB;|transform|(I)I|0x0401\nOPS|Lfx/multi/FxIface;|label|()Ljava/lang/String;|0|\nOPS|Lfx/multi/FxIface;|run|(I)I|0|\nOPS|Lfx/multi/FxMain;|<init>|()V|2|invoke-direct return-void\nOPS|Lfx/multi/FxMain;|onCreate|(Landroid/os/Bundle;)V|7|invoke-super new-instance const/4 invoke-direct const/4 invoke-virtual return-void\nOPS|Lfx/multi/FxMultiA;|<clinit>|()V|3|const/4 sput return-void\nOPS|Lfx/multi/FxMultiA;|<init>|(I)V|5|invoke-direct const-string iput-object iput return-void\nOPS|Lfx/multi/FxMultiA;|add|(II)I|2|add-int/2addr return\nOPS|Lfx/multi/FxMultiA;|bump|(I)V|8|sget add-int/2addr sput iget mul-int/lit8 add-int/2addr iput return-void\nOPS|Lfx/multi/FxMultiA;|classify|(I)I|8|if-lez const/4 return if-nez const/4 return const/4 return\nOPS|Lfx/multi/FxMultiA;|countDown|(I)I|6|const/4 if-lez add-int/lit8 add-int/lit8 goto return\nOPS|Lfx/multi/FxMultiA;|describe|()Ljava/lang/String;|11|new-instance invoke-direct iget-object invoke-virtual const/16 invoke-virtual iget invoke-virtual invoke-virtual move-result-object return-object\nOPS|Lfx/multi/FxMultiB;|<init>|()V|2|invoke-direct return-void\nOPS|Lfx/multi/FxMultiB;|apply|(I)I|4|invoke-virtual move-result add-int/lit8 return\nOPS|Lfx/multi/FxMultiB;|transform|(I)I|0|\n"
+}
+// GOLDEN-END dex/fx-multidex.dexparse.norm.txt
+
+///|
+// GOLDEN-BEGIN dex/fx-multidex2.dexparse.norm.txt
+fn golden_fx_multidex2_dexparse() -> String {
+  "HDR|magic|'dex\\n035\\0'\nHDR|checksum|2824d898\nHDR|signature|7b5c...619a\nHDR|file_size|1640\nHDR|header_size|112\nHDR|string_ids_size|35\nHDR|type_ids_size|11\nHDR|proto_ids_size|11\nHDR|field_ids_size|2\nHDR|method_ids_size|13\nHDR|class_defs_size|2\nSTR|0|<init>\nSTR|1|D\nSTR|2|DD\nSTR|3|FxMultiC.java\nSTR|4|FxMultiD.java\nSTR|5|I\nSTR|6|II\nSTR|7|J\nSTR|8|L\nSTR|9|LI\nSTR|10|LL\nSTR|11|LLL\nSTR|12|Lfx/multi/sec/FxMultiC;\nSTR|13|Lfx/multi/sec/FxMultiD;\nSTR|14|Ljava/lang/Object;\nSTR|15|Ljava/lang/String;\nSTR|16|Ljava/lang/StringBuilder;\nSTR|17|V\nSTR|18|VJD\nSTR|19|Z\nSTR|20|ZL\nSTR|21|[I\nSTR|22|abs\nSTR|23|append\nSTR|24|check\nSTR|25|getId\nSTR|26|id\nSTR|27|join\nSTR|28|length\nSTR|29|scale\nSTR|30|scaled\nSTR|31|squares\nSTR|32|toString\nSTR|33||\nSTR|34|~~D8{\"backend\":\"dex\",\"compilation-mode\":\"debug\",\"has-checksums\":false,\"min-api\":21,\"sha-1\":\"abaab469b5ebd4dd2bb91ba0ed6f45277faae4ca\",\"version\":\"8.6.2-dev\"}\nCLZ|Lfx/multi/sec/FxMultiC;\nMTH|Lfx/multi/sec/FxMultiC;|<init>|(JD)V|0x10001\nMTH|Lfx/multi/sec/FxMultiC;|check|(Ljava/lang/String;)Z|0x0001\nMTH|Lfx/multi/sec/FxMultiC;|getId|()J|0x0001\nMTH|Lfx/multi/sec/FxMultiC;|scaled|(D)D|0x0001\nCLZ|Lfx/multi/sec/FxMultiD;\nMTH|Lfx/multi/sec/FxMultiD;|<init>|()V|0x10001\nMTH|Lfx/multi/sec/FxMultiD;|abs|(I)I|0x0009\nMTH|Lfx/multi/sec/FxMultiD;|join|(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;|0x0009\nMTH|Lfx/multi/sec/FxMultiD;|squares|(I)[I|0x0009\nOPS|Lfx/multi/sec/FxMultiC;|<init>|(JD)V|4|invoke-direct iput-wide iput-wide return-void\nOPS|Lfx/multi/sec/FxMultiC;|check|(Ljava/lang/String;)Z|9|if-eqz invoke-virtual move-result const/4 if-le const/4 goto const/4 return\nOPS|Lfx/multi/sec/FxMultiC;|getId|()J|2|iget-wide return-wide\nOPS|Lfx/multi/sec/FxMultiC;|scaled|(D)D|5|iget-wide mul-double const-wide/high16 add-double/2addr return-wide\nOPS|Lfx/multi/sec/FxMultiD;|<init>|()V|2|invoke-direct return-void\nOPS|Lfx/multi/sec/FxMultiD;|abs|(I)I|3|if-gez neg-int return\nOPS|Lfx/multi/sec/FxMultiD;|join|(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;|12|new-instance invoke-direct invoke-virtual move-result-object const-string invoke-virtual move-result-object invoke-virtual move-result-object invoke-virtual move-result-object return-object\nOPS|Lfx/multi/sec/FxMultiD;|squares|(I)[I|8|new-array const/4 if-ge mul-int aput add-int/lit8 goto return-object\n"
+}
+// GOLDEN-END dex/fx-multidex2.dexparse.norm.txt
 
 ///|
 /// 无符号十六进制（小写，至少 `min` 位）。
@@ -126,66 +160,40 @@ fn fx_proto(p : @dex.ProtoId) -> String {
 }
 
 ///|
-/// 按 dexdump 的顺序找到第一条含指令的方法（class_defs -> direct -> virtual）。
-/// 返回 `(method_ref, 是否找到)`。
-fn fx_first_coded_method(d : @dex.DexFile) -> (Int32, Bool) {
-  let mut ref_idx = -1
-  let mut done = false
-  for c in d.classes {
-    if !done {
-      for m in c.direct_methods {
-        if !done {
-          match m.code {
-            Some(code) =>
-              if !code.insns.is_empty() {
-                ref_idx = fx_find_ref(d, m)
-                done = true
-              }
-            None => ()
-          }
+/// 全方法 opcode 序列渲染（与 golden-diff.ps1 的 dexdump 规范化同口径）：
+/// `OPS|<class>|<name>|<proto>|<n>|<m0> <m1> ...`；code-less 方法 n=0 空序列。
+/// WP-4（2026-11-07）：取代旧版"首方法 16 条指令抽样"（INSMTH/INS）口径，
+/// 覆盖样本内每个类每个方法的全量指令序列。
+fn fx_ops_line(
+  cls : String,
+  name : String,
+  proto : String,
+  code : @dex.CodeItem?,
+) -> String {
+  let mut s = ""
+  let mut n = 0
+  match code {
+    Some(c) => {
+      let mut first = true
+      for i in c.insns {
+        if first {
+          first = false
+        } else {
+          s = s + " "
         }
+        s = s + i.mnemonic
+        n = n + 1
       }
     }
-    if !done {
-      for m in c.virtual_methods {
-        if !done {
-          match m.code {
-            Some(code) =>
-              if !code.insns.is_empty() {
-                ref_idx = fx_find_ref(d, m)
-                done = true
-              }
-            None => ()
-          }
-        }
-      }
-    }
+    None => ()
   }
-  (ref_idx, done)
+  "OPS|\{cls}|\{name}|\{proto}|\{n}|\{s}"
 }
 
 ///|
-fn fx_find_ref(d : @dex.DexFile, target : @dex.MethodDef) -> Int32 {
-  let mut res = -1
-  let mut i = 0
-  let n = d.methods.length()
-  while i < n {
-    let m = d.methods[i]
-    if m.class_index == target.class_index &&
-      m.name_index == target.name_index &&
-      m.proto_index == target.proto_index &&
-      res < 0 {
-      res = i
-    }
-    i = i + 1
-  }
-  res
-}
-
-///|
-/// dex 解析侧黄金规范化：HDR 子集 + STR + CLZ + MTH + INSMTH/INS。
+/// dex 解析侧黄金规范化：HDR 子集 + STR + CLZ + MTH + OPS（全方法 opcode 序列）。
 /// 与 fixtures/golden/dex/<id>.dexparse.norm.txt 同构（该文件由 dexdump 规范化生成）。
-fn fx_canon_dex(d : @dex.DexFile) -> String raise @dex.DexError {
+fn fx_canon_dex(d : @dex.DexFile) -> String {
   let out : Array[String] = []
   out.push("HDR|magic|\{fx_magic(d.version)}")
   out.push("HDR|checksum|\{fx_hex8(d.checksum)}")
@@ -218,22 +226,28 @@ fn fx_canon_dex(d : @dex.DexFile) -> String raise @dex.DexError {
       )
     }
   }
-  let m_ref = fx_first_coded_method(d)
-  if m_ref.1 {
-    let ref_idx = m_ref.0
-    let md = d.methods[ref_idx]
-    out.push(
-      "INSMTH|\{d.type_descriptors[md.class_index]}|\{d.strings[md.name_index]}|\{fx_proto(d.protos[md.proto_index])}",
-    )
-    match d.code(ref_idx) {
-      Some(code) => {
-        let mut k = 0
-        while k < code.insns.length() && k < 16 {
-          out.push("INS|\{k}|\{code.insns[k].mnemonic}")
-          k = k + 1
-        }
-      }
-      None => ()
+  // OPS：全方法 opcode 序列（WP-4 2026-11-07 扩展）：类序 -> direct -> virtual，
+  // 与工具侧 dexdump -d 的全量差分；code-less 方法（abstract/interface）n=0 空序列。
+  for c in d.classes {
+    for m in c.direct_methods {
+      out.push(
+        fx_ops_line(
+          c.type_descriptor,
+          d.strings[m.name_index],
+          fx_proto(d.protos[m.proto_index]),
+          m.code,
+        ),
+      )
+    }
+    for m in c.virtual_methods {
+      out.push(
+        fx_ops_line(
+          c.type_descriptor,
+          d.strings[m.name_index],
+          fx_proto(d.protos[m.proto_index]),
+          m.code,
+        ),
+      )
     }
   }
   let mut s = ""
@@ -305,5 +319,99 @@ test "golden dex phone-1.6.0 [SKIPPED: 第三方样本未提取]" {
 test "dex L3 device [SKIPPED: 本轮不执行真机测试]" {
   println(
     "SKIPPED: 真机测试本轮不执行（需 adb + 设备样本；解析侧用 @dex.parse 与设备样本做差分）",
+  )
+}
+
+///|
+/// 受控构建多 dex 样本（桶 1）黄金差分：解析输出 == dexdump 规范化黄金
+///（HDR/STR/CLZ/MTH + 全方法 opcode 序列 OPS）。
+test "golden dex fx-multidex" {
+  let d = @dex.parse(fixture_fx_multidex_dex())
+  assert_eq(
+    fx_canon_dex(d),
+    golden_fx_multidex_dexparse(),
+    msg="fx-multidex classes.dex 解析输出 == dexdump 规范化黄金",
+  )
+}
+
+///|
+/// 受控构建多 dex 样本（桶 2）黄金差分。
+test "golden dex fx-multidex2" {
+  let d = @dex.parse(fixture_fx_multidex2_dex())
+  assert_eq(
+    fx_canon_dex(d),
+    golden_fx_multidex2_dexparse(),
+    msg="fx-multidex classes2.dex 解析输出 == dexdump 规范化黄金",
+  )
+}
+
+///|
+/// 多 dex 结构冒烟：两个 DEX 条目各自可解析；桶 1 含接口/抽象方法（code-less 路径）。
+test "smoke dex multi-dex fx-multidex" {
+  let d1 = @dex.parse(fixture_fx_multidex_dex())
+  let d2 = @dex.parse(fixture_fx_multidex2_dex())
+  assert_eq(d1.file_size, 2116, msg="classes.dex 字节数")
+  assert_eq(d2.file_size, 1640, msg="classes2.dex 字节数")
+  assert_eq(
+    d1.classes.length(),
+    4,
+    msg="桶 1：FxIface/FxMain/FxMultiA/FxMultiB",
+  )
+  assert_eq(d2.classes.length(), 2, msg="桶 2：FxMultiC/FxMultiD")
+  let mut no_code = 0
+  for c in d1.classes {
+    for m in c.direct_methods {
+      match m.code {
+        None => no_code = no_code + 1
+        Some(_) => ()
+      }
+    }
+    for m in c.virtual_methods {
+      match m.code {
+        None => no_code = no_code + 1
+        Some(_) => ()
+      }
+    }
+  }
+  assert_true(
+    no_code >= 3,
+    msg="FxIface.run/label + FxMultiB.transform 无 code",
+  )
+}
+
+///|
+/// 全方法 opcode 序列覆盖冒烟（WP-4 扩展点）：差分范围是**每个类每个方法**的全量
+/// 指令序列，而非旧口径的"首方法 16 条抽样"。桶 1 全方法指令合计远超 16 条。
+test "smoke dex 全方法 opcode 序列覆盖" {
+  let d = @dex.parse(fixture_fx_multidex_dex())
+  let mut total = 0
+  let mut coded = 0
+  for c in d.classes {
+    for m in c.direct_methods {
+      match m.code {
+        Some(code) => {
+          total = total + code.insns.length()
+          coded = coded + 1
+        }
+        None => ()
+      }
+    }
+    for m in c.virtual_methods {
+      match m.code {
+        Some(code) => {
+          total = total + code.insns.length()
+          coded = coded + 1
+        }
+        None => ()
+      }
+    }
+  }
+  assert_true(
+    coded >= 10,
+    msg="桶 1 含 code 方法数（全方法差分范围）",
+  )
+  assert_true(
+    total >= 50,
+    msg="桶 1 全方法指令合计远超旧口径 16 条抽样上限",
   )
 }

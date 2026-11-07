@@ -1,5 +1,13 @@
-// import {
-//   "hnlyxiaobing/dex" @lib,
-// }
+import {
+  "hnlyxiaobing/dex",
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/fs",
+  "moonbitlang/core/compress/flate",
+  "moonbitlang/core/env",
+}
 
 pkgtype(kind: "executable")
+
+options(
+  "allow-experimental-packages": true,
+)

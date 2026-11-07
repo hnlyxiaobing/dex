@@ -2,7 +2,7 @@
 
 **DEX 解析与 Dalvik 反汇编基础库 —— 容器、表、code_item 与指令解码，纯 MoonBit 实现。**
 
-> 状态：**已实现并门禁全绿**（R2 冻结前整改 2026-11-07 复核）。`moon check --deny-warn` 0 error / 0 warning（原 6 条 `0068` 已消失）；`moon test` 43/43。**真实样本解析存在已见缺陷**（见「测试与验收」）。
+> 状态：**已实现并门禁全绿**（R2 语义补全 2026-11-07）。`moon check --deny-warn` 0 error / 0 warning；`moon test` 72/72。真实样本（tvshell/motionshell/自建 AnnoSample）解析、注解语义与静态初值均经 `dexdump -d -a` 逐值核对。
 
 ## 定位与为什么存在
 
@@ -13,12 +13,13 @@
 ## 能力范围 / 非目标
 
 - **做**：单 DEX 的 header / string / type / proto / field / method / class_def 六表；`code_item`、try/catch 表、`debug_info` 原始字节；约 218 条 Dalvik 指令解码；smali 风格文本输出。
-- **不做**：控制流图、Java 反编译、多 dex 合并（交上层）、符号解析（配 `dwarfscope`）、DEX 写入/回编、oat/odex/vdex。
+- **做（R2 WP-2 语义补全）**：注解语义——annotation_directory_item（class/field/method/parameter 四类）、annotation_set_item、annotation_item、encoded_annotation 与 encoded_value 全 16 类型解码（数组/枚举/嵌套注解/NULL）；static_values 静态字段初值与 encoded_array（**加密字符串入口**）；指令结构化操作数视图（regs/literal/branch/index）与按表解析名字 helper（invoke→`Lcls;->name(sig)ret`、const-string→字符串池项、字段→`Lcls;->name:type`、类型→类名）。
+- **不做**：控制流图、Java 反编译、多 dex 合并（交上层；组合模式 = 逐 dex `parse` + 调用方编排，`MultiDexNotMerged` 语义维持）、符号解析（配 `dwarfscope`）、DEX 写入/回编、oat/odex/vdex。
 - **与 axml、apk 互不知晓**（架构原则 P1、ADR-0003）；可被单独依赖。
 
 ## 公开接口（速览）
 
-`parse(Bytes) -> DexFile raise DexError`、`DexFile::{classes, methods, code, strings}`、`disasm(DexFile, MethodHandle) -> String`。完整签名见 `API.md`。
+`parse(Bytes) -> DexFile raise DexError`、`DexFile::{classes, methods, code, strings}`、`disasm(DexFile, MethodHandle) -> String`；注解/常量值：`class_annotations(Bytes, Int) -> AnnotationsDirectory?`、`static_values(Bytes, Int) -> Array[EncodedValue]`（加密字符串入口）、`annotation_set` / `annotation_item` / `encoded_array`；操作数：`instruction_operands(Instruction) -> InsnOperands`、`string_ref_name` / `type_ref_name` / `field_ref_name` / `method_ref_name` / `resolve_ref_name` / `instruction_ref_name`。完整签名见 `API.md`（全部加法性新增，冻结面零改动）。
 
 ## 依赖
 
@@ -33,7 +34,7 @@
 
 ## 测试与验收
 
-- **测试策略（现状）**：L0 程序化 fixture 37 例（六表 / class_def / code_item / magic·checksum 错误路径）；L1 真实样本内嵌（tvshell-debug 4368 B、motionshell 3148 B）+ L2 `dexdump` 规范化黄金 `fixtures/golden/dex/*.norm.txt` 逐字段差分；畸形派生 5 例（截断 / magic / 错误 checksum / 表偏移 / 未知 opcode，均断言报 `DexError` 而非 panic）。均由 `fixtures/golden/golden-diff.ps1` 驱动。
+- **测试策略（现状）**：L0 程序化 fixture 37 例（六表 / class_def / code_item / magic·checksum 错误路径）；L1 真实样本内嵌（tvshell-debug 4368 B、motionshell 3148 B）+ L2 `dexdump` 规范化黄金 `fixtures/golden/dex/*.norm.txt` 逐字段差分；畸形派生 5 例；注解/常量值/操作数语义 20 例（R2 WP-2：程序化 fixture 覆盖 VALUE_FIELD/METHOD/窄宽编码 + 真实样本 AnnoSample.dex（javac21+d8 自建，SHA-256 16dbf2d6…52d0d）与 tvshell（VALUE_METHOD/VALUE_NULL/静态字符串初值）经 `dexdump -d -a` 逐值核对）。均由 `fixtures/golden/golden-diff.ps1` 驱动。
 - **验收状态**：工具侧 `dexdump ↔ 黄金` **全通**；解析侧 `@dex.parse ↔ 黄金` **已启用并全通** —— WP-G 首跑发现的真实 DEX 缺陷 `InvalidIndex(MethodId, 49)`（`method_idx_diff` 未在 direct/virtual 分段复位）**已由 R2 主控修复**（`parse_class_data` 分段复位，AOSP libdex 行为），tvshell-debug 与 motionshell 解析侧差分均 exit 0，见 `DESIGN.md` §13。
 - 依赖资产：真实 APK 位于工作区外 `D:\MoonBit\motion_sensing_game\`（受控自建与 AOSP 来源已入库提取样本；目标游戏 APK 许可不明仅登记哈希），清单见 `../fixtures/golden/ASSETS.md` 与 `../docs/open-questions.md` §2.1。
 
@@ -46,7 +47,8 @@
 | 表解析 / 指令解码 / smali 输出 | ✅ 真实实现（无 `declare`） |
 | L1 真实样本 + L2 `dexdump` 黄金 + 差分脚本 | ✅ R2 WP-G |
 | 真实 DEX 解析（解析侧差分） | ✅ **全通**（P0 缺陷已修复，DESIGN §13） |
-| `moon check --deny-warn` / `moon build` / `moon test` / `moon fmt --check` | ✅ 全绿（43/43） |
+| 注解语义 / 静态初值 / 结构化操作数（`semval.mbt` `annot.mbt` `operand.mbt`） | ✅ R2 WP-2（加法性新增） |
+| `moon check --deny-warn` / `moon build` / `moon test` / `moon fmt --check` | ✅ 全绿（72/72） |
 
 ## 本轮顺序说明
 

@@ -6,9 +6,33 @@ import {
 }
 
 // Values
+pub fn annotation_item(Bytes, Int32) -> Annotation raise DexError
+
+pub fn annotation_set(Bytes, Int32) -> AnnotationSet raise DexError
+
+pub fn class_annotations(Bytes, Int32) -> AnnotationsDirectory? raise DexError
+
 pub fn disasm(DexFile, Int32) -> String raise DexError
 
+pub fn encoded_array(Bytes, Int32) -> Array[EncodedValue] raise DexError
+
+pub fn field_ref_name(DexFile, Int32) -> String raise DexError
+
+pub fn instruction_operands(Instruction) -> InsnOperands raise DexError
+
+pub fn instruction_ref_name(DexFile, Instruction) -> String? raise DexError
+
+pub fn method_ref_name(DexFile, Int32) -> String raise DexError
+
 pub fn parse(Bytes) -> DexFile raise DexError
+
+pub fn resolve_ref_name(DexFile, IndexKind, Int32) -> String raise DexError
+
+pub fn static_values(Bytes, Int32) -> Array[EncodedValue] raise DexError
+
+pub fn string_ref_name(DexFile, Int32) -> String raise DexError
+
+pub fn type_ref_name(DexFile, Int32) -> String raise DexError
 
 // Errors
 #derive(@debug.Debug)
@@ -26,6 +50,33 @@ pub suberror DexError {
 pub fn DexError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+pub(all) struct Annotation {
+  visibility : AnnotationVisibility
+  annotation : EncodedAnnotation
+}
+
+pub(all) struct AnnotationElement {
+  name : String
+  value : EncodedValue
+}
+
+pub(all) struct AnnotationSet {
+  annotations : Array[Annotation]
+}
+
+pub(all) enum AnnotationVisibility {
+  VisibilityBuild
+  VisibilityRuntime
+  VisibilitySystem
+}
+
+pub(all) struct AnnotationsDirectory {
+  class_annotations : AnnotationSet
+  field_annotations : Array[FieldAnnotations]
+  method_annotations : Array[MethodAnnotations]
+  parameter_annotations : Array[ParameterAnnotations]
+}
+
 pub(all) struct ClassDef {
   class_index : Int32
   type_descriptor : String
@@ -81,11 +132,56 @@ pub(all) enum DexVersion {
   Unknown(Int32)
 }
 
+pub(all) struct EncodedAnnotation {
+  type_descriptor : String
+  elements : Array[AnnotationElement]
+}
+
+pub(all) enum EncodedValue {
+  ValueByte(Int32)
+  ValueShort(Int32)
+  ValueChar(Int32)
+  ValueInt(Int32)
+  ValueLong(Int64)
+  ValueFloat(Float)
+  ValueDouble(Double)
+  ValueString(String)
+  ValueType(String)
+  ValueField(String)
+  ValueMethod(String)
+  ValueEnum(String)
+  ValueArray(Array[EncodedValue])
+  ValueAnnotation(EncodedAnnotation)
+  ValueNull
+  ValueBoolean(Bool)
+}
+
+pub(all) struct FieldAnnotations {
+  field_index : Int32
+  annotations : AnnotationSet
+}
+
 pub(all) struct FieldDef {
   class_index : Int32
   type_index : Int32
   name_index : Int32
   access_flags : UInt32
+}
+
+pub(all) enum IndexKind {
+  IndexNone
+  IndexString
+  IndexType
+  IndexField
+  IndexMethod
+}
+
+pub(all) struct InsnOperands {
+  regs : Array[Int32]
+  literal : Int64?
+  branch : Int32?
+  index_kind : IndexKind
+  index : Int32
 }
 
 pub(all) struct Instruction {
@@ -96,6 +192,11 @@ pub(all) struct Instruction {
   raw : Bytes
 }
 
+pub(all) struct MethodAnnotations {
+  method_index : Int32
+  annotations : AnnotationSet
+}
+
 pub(all) struct MethodDef {
   class_index : Int32
   name_index : Int32
@@ -103,6 +204,11 @@ pub(all) struct MethodDef {
   access_flags : UInt32
   code_off : Int32
   code : CodeItem?
+}
+
+pub(all) struct ParameterAnnotations {
+  method_index : Int32
+  parameters : Array[AnnotationSet]
 }
 
 pub(all) struct ProtoId {

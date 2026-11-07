@@ -23,6 +23,11 @@
 | `DexError` | `pub suberror` | 9 个带偏移/索引的错误构造 |
 | `MethodHandle` | `pub type` | `Int` 别名 |
 | `Disassembler` | `pub trait` | `disasm` 只读契约 |
+| `AnnotationVisibility` | `pub(all) enum` | VisibilityBuild/Runtime/System（annotation_item.visibility） |
+| `EncodedValue` | `pub(all) enum` | encoded_value 全 16 种 value_type 解码（含数组/枚举/嵌套注解/NULL/BOOL） |
+| `EncodedAnnotation` / `AnnotationElement` / `Annotation` / `AnnotationSet` | `pub(all) struct` | annotation_item / encoded_annotation / 注解集 |
+| `AnnotationsDirectory` + `FieldAnnotations` / `MethodAnnotations` / `ParameterAnnotations` | `pub(all) struct` | annotation_directory_item 四类目录 |
+| `InsnOperands` / `IndexKind` | `pub(all) struct` / `enum` | 指令结构化操作数视图（加法性，不动 `Instruction`） |
 
 ## 函数签名
 
@@ -35,6 +40,45 @@
 | `DexFile::strings(self) -> Array[String]` | `self` 只读 | string_id 顺序表 | 无状态 | — |
 | `disasm(dex : DexFile, method_ref : MethodHandle) -> String raise DexError` | 只读 | smali 风格文本 / `InvalidInstruction` | 无状态；不做 CFG/类型推断 | 218 条指令表（W3） |
 
+## 注解 / 静态初值（R2 WP-2 加法性新增）
+
+> ⚠ **接线注意**：入口自含，第一个参数是**原始 DEX `Bytes`**（不是 `DexFile`）。
+> `class_index` 为 **class_defs 表位置**（与 `DexFile::methods` 的 `class_index` 同义）。
+
+| 签名 | 参数与所有权 | 返回 / 错误 | 说明 |
+|---|---|---|---|
+| `class_annotations(data : Bytes, class_index : Int32) -> AnnotationsDirectory? raise DexError` | `data` 只读、调用方持有 | 四类注解目录；`annotations_off==0` → `None` | annotation_directory_item 全解码 |
+| `static_values(data : Bytes, class_index : Int32) -> Array[EncodedValue] raise DexError` | 同上 | 常量值数组（**加密字符串入口**） | static_values_off → encoded_array；前缀省略语义（返回长度 ≤ static_fields 数） |
+| `annotation_set(data : Bytes, off : Int32) -> AnnotationSet raise DexError` | `off` 为文件内偏移（≥0x70） | 注解集 | annotation_set_item |
+| `annotation_item(data : Bytes, off : Int32) -> Annotation raise DexError` | 同上 | 可见性 + encoded_annotation | annotation_item |
+| `encoded_array(data : Bytes, off : Int32) -> Array[EncodedValue] raise DexError` | 同上 | 常量值数组 | encoded_array（AnnotationDefault 等通用） |
+
+`EncodedValue` 解码规则（已用真实样本钉死）：format 字节 = `(value_arg << 5) | value_type`，
+value_type 码表 byte=0x00 short=0x02 char=0x03 int=0x04 long=0x06 float=0x10 double=0x11
+string=0x17 type=0x18 field=0x19 method=0x1a enum=0x1b array=0x1c annotation=0x1d
+null=0x1e boolean=0x1f；整型右对齐符号/零扩展（最小宽度），**float/double 左对齐、低位补零**
+（dex 格式 "zero-extended to the right"，实证 3.5f 存 `60 40` 两字节）。
+引用类值解码时按表解析为名字：字符串池项原文、类型描述符、字段/枚举 `Lcls;->name:type`、
+方法 `Lcls;->name(params)ret`。注解结构错误复用既有错误构造（`DexError` 冻结未动）：
+截断 → `UnexpectedEof`、索引越界 → `InvalidIndex(StringId/TypeId/FieldId/MethodId, idx)`、
+未定义 value_type/visibility/结构损坏 → `BadTableOffset(ClassDef, 偏移)`。
+
+## 结构化指令操作数 / 名字解析（R2 WP-2 加法性新增）
+
+> `Instruction` 冻结结构**未改动**；`InsnOperands` 为新增视图（从 `Instruction::raw` 重解码），
+> 文本 `operands`（smali 风格）行为不变。名字格式与 `disasm` 一致（smali `->`；
+> dexdump 显示为 `.` 分隔，语义相同）。
+
+| 签名 | 说明 |
+|---|---|
+| `instruction_operands(insn : Instruction) -> InsnOperands raise DexError` | `regs`（invoke 列表/range 已展开）/ `literal : Int64?` / `branch : Int32?` / `index_kind` / `index`；switch·数组 payload 伪指令返回空视图 |
+| `string_ref_name(dex : DexFile, index : Int32) -> String raise DexError` | const-string → 字符串池项 |
+| `type_ref_name(dex : DexFile, index : Int32) -> String raise DexError` | 类型引用 → 类名（描述符） |
+| `field_ref_name(dex : DexFile, index : Int32) -> String raise DexError` | 字段引用 → `Lcls;->name:type` |
+| `method_ref_name(dex : DexFile, index : Int32) -> String raise DexError` | invoke → `Lcls;->name(params)ret` |
+| `resolve_ref_name(dex : DexFile, kind : IndexKind, index : Int32) -> String raise DexError` | 按 `IndexKind` 综合解析（`IndexNone` 抛 `InvalidIndex`） |
+| `instruction_ref_name(dex : DexFile, insn : Instruction) -> String? raise DexError` | 一步解析指令引用；无引用操作数返回 `None` |
+
 ## 错误构造速查
 
 `UnexpectedEof` · `BadMagic` · `UnsupportedVersion` · `BadTableOffset(TableKind, Int)` · `InvalidIndex(TableKind, Int)` · `InvalidInstruction(offset, opcode)` · `BadCodeItem` · `BadDebugInfo` · `MultiDexNotMerged`
@@ -43,13 +87,26 @@
 
 CFG、Java 反编译、多 dex 合并、符号解析、DEX 写入/回编、oat/odex。
 
+**多 dex 组合模式（维持 `MultiDexNotMerged` 语义）**：本库只处理**单个 DEX 字节流**；
+`classes.dex` / `classes2.dex` … 由调用方（组合根）**逐 dex `parse` + 编排**——
+对每个 `DexEntry.bytes` 独立调用 `parse` / `class_annotations` / `static_values`，
+跨 dex 的类/引用解析由上层负责。喂入 ZIP/APK 容器或多 dex 拼接字节时入口明确报
+`MultiDexNotMerged`，不做隐式合并。
+
+## 冻结标注（R2 WP-2）
+
+本轮全部为**加法性新增**（`pkg.generated.mbti` 快照 diff 106 行插入 / 0 行删除）：
+既有公开签名（`parse` / `disasm` / 访问器 / `Instruction` / `ClassDef` / `DexFile` /
+`DexError` 等）**零改动**；结构化操作数以新增 `InsnOperands` 视图实现（保旧文本接口）；
+注解/常量值为新增类型与函数；`DexError` 构造集合未扩（注解结构错误复用既有构造）。
+
 ## 状态
 
 | 门禁 | 结果 |
 |---|---|
 | `moon check --deny-warn` | ✅ 0 error / 0 warning（无 `0068`） |
 | `moon build` | ✅ |
-| `moon test` | ✅ 47 / 47（含真实样本黄金/smoke/畸形派生；另有 3 个 `#skip` 用例不计入：第三方样本未提取、L3 真机、DEX 无 chunk 概念） |
+| `moon test` | ✅ 72 / 72（基线 47 + WP-2 注解/常量值/操作数 20 + WP-4 OPS 5；另有 3 个 `#skip` 用例不计入：第三方样本未提取、L3 真机、DEX 无 chunk 概念） |
 | `moon fmt --check` | ✅ |
 
 黄金差分（`fixtures/golden/golden-diff.ps1`）：工具侧 `dexdump ↔ fixtures/golden/dex/*.norm.txt` **全通**；

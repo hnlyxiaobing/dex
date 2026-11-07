@@ -12,7 +12,10 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 组合根 ──(DexEntry.bytes)──► dex::parse ──► DexFile ──► disasm ──► String(smali)
 ```
 
-零跨模块 import；与 `axml`、`apk` 互不知晓；多 dex 合并在组合根，不在本库。
+零跨模块 import；与 `axml`、`apk` 互不知晓；多 dex 合并在组合根，不在本库
+（组合模式：**逐 dex `parse` + 调用方编排**——对 `classes.dex`/`classes2.dex`… 每个
+`DexEntry.bytes` 独立调用 `parse`/`class_annotations`/`static_values`；
+`MultiDexNotMerged` 语义维持：ZIP/拼接输入明确报错，不隐式合并）。
 
 ## 3. 核心数据结构
 
@@ -26,6 +29,9 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 | `DexVersion` / `TableKind` | magic 版本与表类别（用于错误定位） |
 | `MethodHandle` | 方法定位句柄（`Int` 别名） |
 | `Disassembler` trait | 只读反汇编契约，便于替换文本后端 |
+| `AnnotationVisibility` / `EncodedValue` / `EncodedAnnotation` / `AnnotationElement` / `Annotation` / `AnnotationSet` | （R2 WP-2）annotation_item / encoded_annotation / encoded_value 全类型结构化解码 |
+| `AnnotationsDirectory` / `FieldAnnotations` / `MethodAnnotations` / `ParameterAnnotations` | （R2 WP-2）annotation_directory_item 四类注解目录 |
+| `InsnOperands` / `IndexKind` | （R2 WP-2）指令结构化操作数视图（加法性；`Instruction` 未动） |
 
 ## 4. 错误模型
 
@@ -57,8 +63,14 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 | `DexFile + class_index` | `Array[MethodDef]` | `InvalidIndex` |
 | `DexFile + MethodHandle` | `CodeItem?`（abstract/native 为 `None`） | `DexError` |
 | `DexFile + MethodHandle` | `String`（smali 文本） | `InvalidInstruction` 等 |
+| `Bytes + class_index`（R2 WP-2） | `AnnotationsDirectory?` / `Array[EncodedValue]` | `DexError`（截断 `UnexpectedEof`、索引 `InvalidIndex`、结构 `BadTableOffset`） |
+| `Instruction`（R2 WP-2） | `InsnOperands` | `InvalidInstruction` |
+| `DexFile + Int`（R2 WP-2） | `String`（引用名字解析） | `InvalidIndex` |
 
 `Option` 表达"正常无结果"，`raise` 表达"失败"，二者不混用。
+注解/静态初值入口**自含**（传原始 `Bytes` + class_defs 位置，内部共享 `read_ctx`
+头部校验 + 六表读取；不解析 class_def/code_item，比 `parse` 轻量）；
+批量扫描由调用方按类循环编排（性能非本层目标）。
 
 ## 9. 可替换性与实现细节不泄漏
 
@@ -71,8 +83,10 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 | 黑盒（程序化 fixture，L0） | 六表、class_def、code_item、方法名、magic/checksum 错误路径 | ✅ 37 例 |
 | 黑盒（真实样本，L1/L2，R2 WP-G 新增） | 内嵌真实 `classes.dex`（tvshell-debug 4368 B、motionshell 3148 B）；`dexdump` 规范化黄金 `fixtures/golden/dex/*.norm.txt` 与解析输出逐字段 diff | ✅ 工具侧 + **解析侧全通**（P0 缺陷已修复，§13） |
 | 畸形派生（R2 新增 `fixtures_malformed_test.mbt`） | 从真实 dex 派生：截断 / magic 污染 / 错误 checksum / 表偏移污染 / 未知 opcode（重算 adler32 后直达结构错误）；断言报 `DexError` 而非 panic | ✅ 5 例 |
+| 注解/常量值语义（R2 WP-2 `dex_sem_annotations_test.mbt` / `dex_sem_consts_test.mbt`） | 四类注解目录、encoded_value 全 16 类型（含 VALUE_FIELD/METHOD/ENUM/NULL/窄宽/左对齐浮点）、嵌套注解、static_values 前缀语义、错误路径；真实样本 = javac21+d8 自建 AnnoSample.dex（4264 B，SHA-256 16dbf2d6…52d0d）+ tvshell（VALUE_METHOD/VALUE_NULL/加密字符串入口），`dexdump -d -a` 逐值核对 | ✅ 15 例 |
+| 结构化操作数（R2 WP-2 `dex_sem_operand_test.mbt`） | 十种操作数格式的 regs/literal/branch/index 视图、payload 空视图、名字解析 helper、真实样本 main/Kind.\<clinit\> 与 dexdump `// method@00xx` 等对照 | ✅ 5 例 |
 | 白盒 | 六表索引边界、`code_item` 偏移、try/catch、`debug_info` | ✅ |
-| 门禁 | `moon fmt --check` / `moon check --deny-warn` / `moon build` / `moon test` | ✅ 全绿 |
+| 门禁 | `moon fmt --check` / `moon check --deny-warn` / `moon build` / `moon test` | ✅ 全绿（72/72） |
 
 skip 机制：MoonBit 原生 `#skip` 属性（默认不计入 `Total tests`；`moon test --include-skipped` 才执行）。
 所有未跑通/未内嵌的用例都用 `#skip` 显式标注，**绝不冒充通过**。
@@ -105,6 +119,18 @@ skip 机制：MoonBit 原生 `#skip` 属性（默认不计入 `Total tests`；`m
 29,33,34,35；连续累加得 24,49,50 / 27,55 / 29,62,63,64 —— 越界抛 `InvalidIndex(MethodId, 49)`。
 **修复**：进入 instance/virtual 分段时索引复位（`parse.mbt::parse_class_data`）；修复后真实样本
 解析侧差分启用，`golden-diff.ps1 -Chain dex` 全通 exit 0，dex 全部门禁 47/47。
+
+**R2 WP-2 语义补全（2026-11-07）**：新增注解语义（annotation_directory_item 四类 /
+annotation_set_item / annotation_item / encoded_annotation / encoded_value 全 16 类型，
+`semval.mbt` + `annot.mbt`）、静态初值/encoded_array（加密字符串入口）、指令结构化操作数
+视图与名字解析 helper（`operand.mbt`）。**全部加法性**（mbti 快照 106 行插入 / 0 删除，
+冻结面零改动；`DexError` 构造集合未扩）。内部重构：`parse_dex` 的头部校验与五表读取
+以纯代码搬移抽出 `validate_header` / `read_ctx` 供新入口共享（行为等价，47 例基线 + 黄金差分全保）。
+编码布局实证钉死：format=(arg<<5)|type、type 码表（byte=0x00…boolean=0x1f）、
+整型右对齐符号扩展、**float/double 左对齐低位补零**（dexdump 对照：3.5f 存 `60 40`）；
+AnnotationDefault.value 实证为 **VALUE_ANNOTATION 嵌套注解**（非数组）；
+tvshell 实证 VALUE_METHOD（EnclosingMethod）与 VALUE_NULL（InnerClass.name）。
+门禁 72/72 全绿。
 
 ## References
 
