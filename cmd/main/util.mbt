@@ -158,3 +158,20 @@ fn opt_str(v : String?) -> String {
     None => ""
   }
 }
+
+///|
+/// [已接线 · WP-2 xref] XrefKind → 黄金口径固定标签（wp2-contract §4 标签表；
+/// 按仲裁 ⑨ 放 CLI 侧，库内不加 label 方法）。
+fn xref_kind_label(kind : @dex.XrefKind) -> String {
+  match kind {
+    XrefCallVirtual => "call-virtual"
+    XrefCallSuper => "call-super"
+    XrefCallDirect => "call-direct"
+    XrefCallStatic => "call-static"
+    XrefCallInterface => "call-interface"
+    XrefFieldReadStatic => "field-read-static"
+    XrefFieldWriteStatic => "field-write-static"
+    XrefFieldReadInstance => "field-read-instance"
+    XrefFieldWriteInstance => "field-write-instance"
+  }
+}

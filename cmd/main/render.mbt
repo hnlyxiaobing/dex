@@ -423,3 +423,69 @@ fn json_svc_array(
   parts.push("]")
   str_join(parts)
 }
+
+///|
+/// [已接线 · WP-2 xref] 站点目标名：Field* → field_ref_name；
+/// Call* → method_ref_name（wp2-contract §5 接线形态逐字口径）。
+fn xref_target_name(
+  d : @dex.DexFile,
+  s : @dex.XrefSite,
+) -> String raise @dex.DexError {
+  match s.kind {
+    XrefFieldReadStatic
+    | XrefFieldWriteStatic
+    | XrefFieldReadInstance
+    | XrefFieldWriteInstance => @dex.field_ref_name(d, s.target_ref)
+    _ => @dex.method_ref_name(d, s.target_ref)
+  }
+}
+
+///|
+/// [已接线 · WP-2 xref] 黄金序站点收集（wp2-contract §4 排序承诺）：
+/// caller 序 = MTH/OPS 同序（class_def 序 → direct_methods → virtual_methods，
+/// 经 method_ref_of 桥接）× caller 内 offset 升序（sites_in 冻结排序）。
+fn xref_sites_ordered(
+  d : @dex.DexFile,
+  xi : @dex.XrefIndex,
+) -> Array[@dex.XrefSite] raise @dex.DexError {
+  let out : Array[@dex.XrefSite] = []
+  for c in d.classes {
+    for m in c.direct_methods {
+      match @dex.method_ref_of(d, m) {
+        None => ()
+        Some(mref) =>
+          for s in xi.sites_in(mref) {
+            out.push(s)
+          }
+      }
+    }
+    for m in c.virtual_methods {
+      match @dex.method_ref_of(d, m) {
+        None => ()
+        Some(mref) =>
+          for s in xi.sites_in(mref) {
+            out.push(s)
+          }
+      }
+    }
+  }
+  out
+}
+
+///|
+/// [已接线 · WP-2 xref] xref 视图记录行（wp2-contract §4/§5 黄金口径）：
+/// `XREF|<caller_ref>|<offset>|<kind>|<target_ref>`；
+/// caller_ref/target_ref 复用 method_ref_name/field_ref_name 渲染，
+/// offset 为十进制 code-unit 偏移；无访问点 = 空数组（0 行）。
+fn xref_lines(
+  d : @dex.DexFile,
+  xi : @dex.XrefIndex,
+) -> Array[String] raise @dex.DexError {
+  let out : Array[String] = []
+  for s in xref_sites_ordered(d, xi) {
+    out.push(
+      "XREF|\{@dex.method_ref_name(d, s.method_ref)}|\{s.offset}|\{xref_kind_label(s.kind)}|\{xref_target_name(d, s)}",
+    )
+  }
+  out
+}

@@ -14,12 +14,15 @@ fn usage_text() -> String {
     "\{tool_name} —— DEX 清单/反汇编工具（hnlyxiaobing/dex 公开 API 驱动）",
     "",
     "用法:",
-    "  \{tool_name} dump <apk|dex> [--view summary|norm] [--entry <name>] [--json]",
+    "  \{tool_name} dump <apk|dex> [--view summary|norm|xref] [--entry <name>] [--json]",
     "      summary（默认）：HDR|k|v + 每类 CLZ|desc、CLSM|desc|super|source|0xflags、",
     "      FLD|cls|name|type|0xflags、MTH|cls|name|proto|0xflags，",
     "      ANN|target|visibility|type|elements（注解，已接线）、SVC|cls|i|value（静态初值，已接线）",
     "      norm：黄金规范化口径（HDR+STR+CLZ/MTH+OPS 全方法 opcode 序列），",
     "      与 fixtures/golden/dex/*.dexparse.norm.txt 逐行一致",
+    "      xref：调用点/字段访问点索引（XREF|<caller>|<offset>|<kind>|<target>，",
+    "      kind=call-virtual|call-super|call-direct|call-static|call-interface|",
+    "      field-read-static|field-write-static|field-read-instance|field-write-instance）",
     "  \{tool_name} disasm <apk|dex> [--method <ref>] [--entry <name>] [--json]",
     "      全方法 smali 风格反汇编（MREF|ref|cls|name|proto + .class/.method/指令块，",
     "      操作数常量/字段/方法均解析为名字）；--method 只反汇编指定 method_ref",
@@ -268,6 +271,31 @@ fn json_disasm_section(
 }
 
 ///|
+/// [已接线 · WP-2 xref] xref 视图的 JSON 片段：`{"name":…,"sites":[…]}`；
+/// 每站点 `{"method_ref":N,"offset":N,"kind":"<label>","target_ref":N}`
+/// （wp2-contract §5 `--json` 口径）；站点序与 XREF| 记录行同序。
+fn json_xref_section(
+  name : String,
+  d : @dex.DexFile,
+  xi : @dex.XrefIndex,
+) -> String raise @dex.DexError {
+  let parts : Array[String] = []
+  parts.push("{\"name\":\{json_escape(name)},\"sites\":[")
+  let mut first = true
+  for s in xref_sites_ordered(d, xi) {
+    if !first {
+      parts.push(",")
+    }
+    first = false
+    parts.push(
+      "{\"method_ref\":\{s.method_ref},\"offset\":\{s.offset},\"kind\":\{json_escape(xref_kind_label(s.kind))},\"target_ref\":\{s.target_ref}}",
+    )
+  }
+  parts.push("]}")
+  str_join(parts)
+}
+
+///|
 /// `dump` 子命令。
 async fn cmd_dump(rest : ArrayView[String]) -> Int32 {
   let mut in_path = ""
@@ -300,7 +328,7 @@ async fn cmd_dump(rest : ArrayView[String]) -> Int32 {
         if p.has_prefix("-") {
           eprintln("error: 未知选项：\{p}")
           eprintln(
-            "用法: \{tool_name} dump <apk|dex> [--view summary|norm] [--entry <name>] [--json]",
+            "用法: \{tool_name} dump <apk|dex> [--view summary|norm|xref] [--entry <name>] [--json]",
           )
           return 2
         }
@@ -317,12 +345,12 @@ async fn cmd_dump(rest : ArrayView[String]) -> Int32 {
   if in_path == "" {
     eprintln("error: dump 需要 <apk|dex> 参数")
     eprintln(
-      "用法: \{tool_name} dump <apk|dex> [--view summary|norm] [--entry <name>] [--json]",
+      "用法: \{tool_name} dump <apk|dex> [--view summary|norm|xref] [--entry <name>] [--json]",
     )
     return 2
   }
-  if view != "summary" && view != "norm" {
-    eprintln("error: --view 取值应为 summary / norm：\{view}")
+  if view != "summary" && view != "norm" && view != "xref" {
+    eprintln("error: --view 取值应为 summary / norm / xref：\{view}")
     return 2
   }
   let (data, ok) = read_input(in_path)
@@ -360,7 +388,12 @@ async fn cmd_dump(rest : ArrayView[String]) -> Int32 {
         parts.push(",")
       }
       first = false
-      parts.push(json_dump_section(s.0, s.1, @dex.parse(s.1)))
+      let d = @dex.parse(s.1)
+      if view == "xref" {
+        parts.push(json_xref_section(s.0, d, @dex.build_xref(d)))
+      } else {
+        parts.push(json_dump_section(s.0, s.1, d))
+      }
     }
     parts.push("]}")
     println(str_join(parts))
@@ -372,6 +405,8 @@ async fn cmd_dump(rest : ArrayView[String]) -> Int32 {
       }
       let lines = if view == "norm" {
         norm_lines(d)
+      } else if view == "xref" {
+        xref_lines(d, @dex.build_xref(d))
       } else {
         summary_lines(s.1, d)
       }

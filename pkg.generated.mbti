@@ -10,6 +10,8 @@ pub fn annotation_item(Bytes, Int32) -> Annotation raise DexError
 
 pub fn annotation_set(Bytes, Int32) -> AnnotationSet raise DexError
 
+pub fn build_xref(DexFile) -> XrefIndex raise DexError
+
 pub fn class_annotations(Bytes, Int32) -> AnnotationsDirectory? raise DexError
 
 pub fn disasm(DexFile, Int32) -> String raise DexError
@@ -23,6 +25,8 @@ pub fn instruction_operands(Instruction) -> InsnOperands raise DexError
 pub fn instruction_ref_name(DexFile, Instruction) -> String? raise DexError
 
 pub fn method_ref_name(DexFile, Int32) -> String raise DexError
+
+pub fn method_ref_of(DexFile, MethodDef) -> Int32?
 
 pub fn parse(Bytes) -> DexFile raise DexError
 
@@ -235,6 +239,37 @@ pub(all) struct TryItem {
   insn_count : Int32
   handler_off : Int32
   catch_type_index : Int32?
+}
+
+pub struct XrefIndex {
+  all_sites : Array[XrefSite]
+  method_count : Int32
+  field_count : Int32
+}
+pub fn XrefIndex::callees(Self, Int32) -> Array[XrefSite] raise DexError
+pub fn XrefIndex::callers(Self, Int32) -> Array[XrefSite] raise DexError
+pub fn XrefIndex::field_sites(Self, Int32) -> Array[XrefSite] raise DexError
+pub fn XrefIndex::method_sites(Self, Int32) -> Array[XrefSite] raise DexError
+pub fn XrefIndex::sites(Self) -> Array[XrefSite]
+pub fn XrefIndex::sites_in(Self, Int32) -> Array[XrefSite] raise DexError
+
+pub(all) enum XrefKind {
+  XrefCallVirtual
+  XrefCallSuper
+  XrefCallDirect
+  XrefCallStatic
+  XrefCallInterface
+  XrefFieldReadStatic
+  XrefFieldWriteStatic
+  XrefFieldReadInstance
+  XrefFieldWriteInstance
+}
+
+pub(all) struct XrefSite {
+  method_ref : Int32
+  offset : Int32
+  target_ref : Int32
+  kind : XrefKind
 }
 
 // Type aliases
