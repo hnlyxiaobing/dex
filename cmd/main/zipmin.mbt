@@ -1,12 +1,12 @@
 ///|
-/// WP-3 宽松 ZIP 读取器（axml-cli；dex-cli 有同构实现）。
+/// 宽松 ZIP 读取器（axml-cli；dex-cli 有同构实现）。
 /// 动机：moonbitlang/core/archive/zip 严格遍历 extra 字段链，会拒绝 aapt2 对齐填充
 /// 产生的 1~3 字节裸填充 extra（真实第三方 APK 常见，unzip/zipinfo 等工具均容忍）。
-/// 实测（D:\MoonBit\motion_sensing_game\mvp\apks\tv-2.6.1.apk）：1028 个 local 头中
+/// 实测（开发期一个 52 MB 真实第三方 APK）：1028 个 local 头中
 /// 403 个含 1~3 字节填充，core zip 报 `zip: truncated extra field header`。
 /// 本读取器只解析中央目录（实测干净），提取时用 local 头的 name_len/extra_len 直接
 /// 计算负载起点、跳过整个 extra 区域，**不遍历 extra 链**，对填充天然容忍。
-/// 范围限定（如实登记）：不支持 ZIP64（本项目样本均无，见 fixtures/golden/ASSETS.md）、
+/// 范围限定（如实登记）：不支持 ZIP64（开发期样本均无 ZIP64）、
 /// 仅 method 0(Store)/8(Deflate)、不做 CRC-32 校验；条目名按 UTF-8 解码。
 
 ///|

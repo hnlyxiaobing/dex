@@ -55,7 +55,7 @@ pub(all) struct TryItem {
 }
 
 ///|
-/// code_item 的结构化表示；`debug_info` 保留原始字节，本轮不展开。
+/// code_item 的结构化表示；`debug_info` 保留原始字节，暂不展开。
 pub(all) struct CodeItem {
   registers_size : Int32
   ins_size : Int32

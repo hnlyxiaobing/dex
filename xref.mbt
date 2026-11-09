@@ -1,5 +1,5 @@
 ///|
-/// DEX 调用点 / 字段访问点索引（xref P1，WP-2；契约冻结 2026-11-08）。
+/// DEX 调用点 / 字段访问点索引（xref P1；公开签名冻结 2026-11-08）。
 ///
 /// 职责：把单个 dex 内的 invoke-*（调用点）与 iget/iput/sget/sput
 /// （字段访问点）指令收敛为 `XrefSite`，提供目标侧（callers/method_sites/
@@ -19,7 +19,7 @@
 ///
 /// 盲区（P1 不覆盖，如实声明）：反射；MethodHandle 体系（0xFA–0xFF 解析层
 /// 即拒 `InvalidInstruction`——含此类指令的 code_item 在 parse 时已失败，
-/// xref 不可见，测试钉死该口径；W3 延后）；invoke-custom / invoke-polymorphic
+/// xref 不可见，测试钉死该口径）；invoke-custom / invoke-polymorphic
 /// （0x73/0x79/0x7A 本库指令表未定义，同样解析层即拒）；JNI RegisterNatives /
 /// 动态代理 / 运行时织入；跨 dex 调用图；虚分派展开（非目标）；
 /// 注解 / encoded_array / catch_type 引用。
@@ -31,7 +31,7 @@
 /// 查询越界抛 `InvalidIndex(MethodId|FieldId, ref)`，与 `DexFile::code` 一致。
 
 ///|
-/// 访问点类别：五族调用 + 四类字段访问（构造器顺序即契约 §1 冻结顺序）。
+/// 访问点类别：五族调用 + 四类字段访问（构造器顺序即冻结顺序）。
 pub(all) enum XrefKind {
   XrefCallVirtual
   XrefCallSuper
@@ -45,7 +45,7 @@ pub(all) enum XrefKind {
 }
 
 ///|
-/// 单个访问点（契约 §1 冻结布局）。
+/// 单个访问点（冻结布局）。
 pub(all) struct XrefSite {
   method_ref : Int32 // 所在（调用方）方法的 method_ids 索引
   offset : Int32 // code_item 内 code-unit 偏移（与 Instruction::offset 同口径）

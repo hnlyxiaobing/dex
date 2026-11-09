@@ -1,18 +1,18 @@
-// WP-G / Q1 真实样本证据链测试（R2 准备轮新增文件；不修改既有测试）。
+// 真实样本证据链测试（不修改既有测试）。
 //
-// 证据链（由 fixtures/golden/golden-diff.ps1 机器校验）：
-//   真实 APK（SHA-256 见 fixtures/golden/ASSETS.md）
-//     -> tests/fixtures/*.classes.dex（L1 提取，脚本比对字节相等）
-//     -> 本文件内嵌字节（脚本比对 SHA-256 相等）
-//     -> @dex.parse / @dex.disasm 输出 <-> dexdump 规范化黄金（fixtures/golden/dex/*.norm.txt）
+// 证据链（样本清单与 SHA-256 见 tests/ASSETS.md）：
+//   真实 APK（受控自建，来源登记见 tests/ASSETS.md）
+//     -> tests/fixtures/*.classes.dex（提取，比对字节相等）
+//     -> 本文件内嵌字节（比对 SHA-256 相等）
+//     -> @dex.parse / @dex.disasm 输出 <-> dexdump 规范化黄金（本文件 GOLDEN 内嵌黄金常量）
 //
-// ⚠ 缺陷修复记录（R2 主控，2026-11-07）：
-//   WP-G 黄金差分首跑曾发现 `@dex.parse` 对**真实** DEX 抛 `DexError::InvalidIndex(MethodId, 49)`
+// ⚠ 缺陷修复记录（2026-11-07，见 DECISIONS.md D3）：
+//   黄金差分首跑曾发现 `@dex.parse` 对**真实** DEX 抛 `DexError::InvalidIndex(MethodId, 49)`
 //   （tvshell-debug，method_ids_size 只有 43）。根因：`dex/parse.mbt::parse_class_data` 把
 //   class_data_item 的 `method_idx_diff` 在 direct_methods 与 virtual_methods 之间**连续累加**，
 //   而 AOSP libdex / dexdump 在两个分段各自从 0 累加；static_fields/instance_fields 同理。
-//   程序化 fixture 从未覆盖“direct+virtual 分段且 diff 跨段”的真实布局，因此 R1 未暴露。
-//   **本轮已修复**（分段复位），真实样本解析侧差分启用：见下方 golden/smoke 用例。
+//   程序化 fixture 从未覆盖“direct+virtual 分段且 diff 跨段”的真实布局，因此此前未暴露。
+//   **已修复**（分段复位），真实样本解析侧差分启用：见下方 golden/smoke 用例。
 //
 // skip 机制：MoonBit 原生 `#skip` 属性（默认不计入 Total tests；
 // `moon test --include-skipped` 才执行）。未内嵌/未跑通的用例一律 `#skip`。
@@ -49,8 +49,8 @@ fn golden_motionshell_dexparse() -> String {
 // GOLDEN-END dex/motionshell.dexparse.norm.txt
 
 ///|
-/// L1 受控构建样本（WP-4 2026-11-07；aapt2/d8/apksigner 自产多 dex APK，见
-/// fixtures/build-fixtures.ps1）：fx-multidex-v2v3.apk -> classes.dex
+/// L1 受控构建样本（2026-11-07；javac/d8 受控自建多 dex 样本，见
+/// tests/ASSETS.md）：fx-multidex classes.dex
 ///（2116 字节，DEX 035，桶 1：FxIface/FxMain/FxMultiA/FxMultiB）。
 /// 性质：**受控自产**（工具构建，非真实第三方，也非程序化字节拼装）。
 // FIXTURE-BEGIN dex/tests/fixtures/fx-multidex.classes.dex
@@ -160,9 +160,9 @@ fn fx_proto(p : @dex.ProtoId) -> String {
 }
 
 ///|
-/// 全方法 opcode 序列渲染（与 golden-diff.ps1 的 dexdump 规范化同口径）：
+/// 全方法 opcode 序列渲染（与 dexdump 规范化同口径，见 tests/ASSETS.md §2）：
 /// `OPS|<class>|<name>|<proto>|<n>|<m0> <m1> ...`；code-less 方法 n=0 空序列。
-/// WP-4（2026-11-07）：取代旧版"首方法 16 条指令抽样"（INSMTH/INS）口径，
+///（2026-11-07 起）取代旧版"首方法 16 条指令抽样"（INSMTH/INS）口径，
 /// 覆盖样本内每个类每个方法的全量指令序列。
 fn fx_ops_line(
   cls : String,
@@ -192,7 +192,7 @@ fn fx_ops_line(
 
 ///|
 /// dex 解析侧黄金规范化：HDR 子集 + STR + CLZ + MTH + OPS（全方法 opcode 序列）。
-/// 与 fixtures/golden/dex/<id>.dexparse.norm.txt 同构（该文件由 dexdump 规范化生成）。
+/// 与 dexdump 规范化黄金同构（口径见 tests/ASSETS.md §2；黄金值内嵌于本文件 GOLDEN 常量）。
 fn fx_canon_dex(d : @dex.DexFile) -> String {
   let out : Array[String] = []
   out.push("HDR|magic|\{fx_magic(d.version)}")
@@ -226,7 +226,7 @@ fn fx_canon_dex(d : @dex.DexFile) -> String {
       )
     }
   }
-  // OPS：全方法 opcode 序列（WP-4 2026-11-07 扩展）：类序 -> direct -> virtual，
+  // OPS：全方法 opcode 序列（2026-11-07 扩展）：类序 -> direct -> virtual，
   // 与工具侧 dexdump -d 的全量差分；code-less 方法（abstract/interface）n=0 空序列。
   for c in d.classes {
     for m in c.direct_methods {
@@ -264,7 +264,7 @@ fn fx_canon_dex(d : @dex.DexFile) -> String {
 }
 
 ///|
-/// R2 主控修复记录（2026-11-07）：`parse_class_data` 的 direct/virtual（及 static/instance）
+/// 缺陷修复记录（2026-11-07，见 DECISIONS.md D3）：`parse_class_data` 的 direct/virtual（及 static/instance）
 /// 分段索引复位缺陷已修复（AOSP libdex 行为）；本用例由 KNOWN-DEFECT 钉死用例改为
 /// 真实黄金差分：@dex.parse 输出规范化后必须与 dexdump 黄金逐字段一致。
 test "golden dex tvshell-debug" {
@@ -303,8 +303,8 @@ test "golden dex motionshell" {
 }
 
 ///|
-/// phone-1.6.0 / tv-2.6.1（第三方，许可不明）的 dex 体积 8.6MB / 7.3MB，本轮不提取、
-/// 不内嵌、不生成黄金（登记见 fixtures/golden/ASSETS.md 缺口一节）。
+/// phone-1.6.0 / tv-2.6.1（第三方，许可不明）的 dex 体积 8.6MB / 7.3MB，不提取、
+/// 不内嵌、不生成黄金（口径见 tests/ASSETS.md 末节）。
 #skip
 test "golden dex phone-1.6.0 [SKIPPED: 第三方样本未提取]" {
   println(
@@ -313,7 +313,7 @@ test "golden dex phone-1.6.0 [SKIPPED: 第三方样本未提取]" {
 }
 
 ///|
-/// L3 设备测试（本轮不执行）：仅保留接口与 skip 标记。启用条件：真机 + adb 拉取目标 APK 样本后，
+/// L3 设备测试（暂不执行）：仅保留接口与 skip 标记。启用条件：真机 + adb 拉取目标 APK 样本后，
 /// 用与本文件 L1/L2 相同的规范化字段做机上差分。
 #skip
 test "dex L3 device [SKIPPED: 本轮不执行真机测试]" {
@@ -380,7 +380,7 @@ test "smoke dex multi-dex fx-multidex" {
 }
 
 ///|
-/// 全方法 opcode 序列覆盖冒烟（WP-4 扩展点）：差分范围是**每个类每个方法**的全量
+/// 全方法 opcode 序列覆盖冒烟（扩展点）：差分范围是**每个类每个方法**的全量
 /// 指令序列，而非旧口径的"首方法 16 条抽样"。桶 1 全方法指令合计远超 16 条。
 test "smoke dex 全方法 opcode 序列覆盖" {
   let d = @dex.parse(fixture_fx_multidex_dex())
@@ -417,17 +417,17 @@ test "smoke dex 全方法 opcode 序列覆盖" {
 }
 
 ///|
-/// xref 黄金常量（WP-4 R3，2026-11-08；wp2-contract §4 冻结格式）：
+/// xref 黄金常量（2026-11-08；格式固定如下）：
 /// `XREF|<caller_ref>|<offset>|<kind>|<target_ref>`——caller_ref/target_ref =
 /// method_ref_name/field_ref_name 渲染（`Lcls;->name(params)ret` / `Lcls;->name:type`）；
 /// offset = 十进制 code-unit 偏移；kind 标签固定映射见 fx_xref_kind_label。
 /// 排序 = MTH/OPS 黄金同序（class_def 序 → direct_methods → virtual_methods，
 /// 经 method_ref_of 桥接）× caller 内 offset 升序；UTF-8 无 BOM、LF、末行带换行；
 /// 无访问点 = 0 字节空文件。
-/// 三方一致口径（wp2-contract §4 交叉恒等式）：工具侧 dexdump -d 抽取（golden-diff.ps1
-/// Get-XrefNorm；dexdump 目标名 `Lcls;.name:(args)ret` 归一为 `Lcls;->name(args)ret`
-/// 渲染，归一后校验"须含 ->"）== 解析侧 fx_canon_xref == 本内嵌常量（= 黄金文件逐行，
-/// golden-diff.ps1 双向校验）。
+/// 三方一致口径（交叉恒等式）：工具侧 dexdump -d 抽取（dexdump 目标名
+/// `Lcls;.name:(args)ret` 归一为 `Lcls;->name(args)ret` 渲染，归一后校验"须含 ->"）
+/// == 解析侧 fx_canon_xref == 本内嵌常量（黄金值已内嵌，moon test 即回归；
+/// 口径说明见 tests/ASSETS.md §2）。
 // GOLDEN-BEGIN dex/tvshell-debug.xref.norm.txt
 fn golden_tvshell_xref() -> String {
   "XREF|Lcom/cteno/tvshell/MainActivity$1;-><init>(Lcom/cteno/tvshell/MainActivity;)V|0|field-write-instance|Lcom/cteno/tvshell/MainActivity$1;->this$0:Lcom/cteno/tvshell/MainActivity;\nXREF|Lcom/cteno/tvshell/MainActivity$1;-><init>(Lcom/cteno/tvshell/MainActivity;)V|2|call-direct|Landroid/webkit/WebViewClient;-><init>()V\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onPageFinished(Landroid/webkit/WebView;Ljava/lang/String;)V|2|call-direct|Ljava/lang/StringBuilder;-><init>()V\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onPageFinished(Landroid/webkit/WebView;Ljava/lang/String;)V|7|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onPageFinished(Landroid/webkit/WebView;Ljava/lang/String;)V|11|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onPageFinished(Landroid/webkit/WebView;Ljava/lang/String;)V|15|call-virtual|Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onPageFinished(Landroid/webkit/WebView;Ljava/lang/String;)V|21|call-static|Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onReceivedError(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|2|call-direct|Ljava/lang/StringBuilder;-><init>()V\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onReceivedError(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|7|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onReceivedError(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|11|call-virtual|Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onReceivedError(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|17|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onReceivedError(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|21|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onReceivedError(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|25|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onReceivedError(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|29|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onReceivedError(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|33|call-virtual|Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\nXREF|Lcom/cteno/tvshell/MainActivity$1;->onReceivedError(Landroid/webkit/WebView;ILjava/lang/String;Ljava/lang/String;)V|39|call-static|Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I\nXREF|Lcom/cteno/tvshell/MainActivity$2;-><init>(Lcom/cteno/tvshell/MainActivity;)V|0|field-write-instance|Lcom/cteno/tvshell/MainActivity$2;->this$0:Lcom/cteno/tvshell/MainActivity;\nXREF|Lcom/cteno/tvshell/MainActivity$2;-><init>(Lcom/cteno/tvshell/MainActivity;)V|2|call-direct|Landroid/webkit/WebChromeClient;-><init>()V\nXREF|Lcom/cteno/tvshell/MainActivity$2;->onConsoleMessage(Landroid/webkit/ConsoleMessage;)Z|2|call-direct|Ljava/lang/StringBuilder;-><init>()V\nXREF|Lcom/cteno/tvshell/MainActivity$2;->onConsoleMessage(Landroid/webkit/ConsoleMessage;)Z|7|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity$2;->onConsoleMessage(Landroid/webkit/ConsoleMessage;)Z|11|call-virtual|Landroid/webkit/ConsoleMessage;->message()Ljava/lang/String;\nXREF|Lcom/cteno/tvshell/MainActivity$2;->onConsoleMessage(Landroid/webkit/ConsoleMessage;)Z|15|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity$2;->onConsoleMessage(Landroid/webkit/ConsoleMessage;)Z|19|call-virtual|Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\nXREF|Lcom/cteno/tvshell/MainActivity$2;->onConsoleMessage(Landroid/webkit/ConsoleMessage;)Z|25|call-static|Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\nXREF|Lcom/cteno/tvshell/MainActivity;-><init>()V|0|call-direct|Landroid/app/Activity;-><init>()V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|0|call-super|Landroid/app/Activity;->onCreate(Landroid/os/Bundle;)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|3|call-virtual|Lcom/cteno/tvshell/MainActivity;->getWindow()Landroid/view/Window;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|9|call-virtual|Landroid/view/Window;->addFlags(I)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|14|call-direct|Landroid/webkit/WebView;-><init>(Landroid/content/Context;)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|17|field-write-instance|Lcom/cteno/tvshell/MainActivity;->web:Landroid/webkit/WebView;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|19|field-read-instance|Lcom/cteno/tvshell/MainActivity;->web:Landroid/webkit/WebView;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|21|call-virtual|Landroid/webkit/WebView;->getSettings()Landroid/webkit/WebSettings;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|26|call-virtual|Landroid/webkit/WebSettings;->setJavaScriptEnabled(Z)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|29|call-virtual|Landroid/webkit/WebSettings;->setDomStorageEnabled(Z)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|32|call-virtual|Landroid/webkit/WebSettings;->setAllowFileAccess(Z)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|35|call-virtual|Landroid/webkit/WebSettings;->setLoadWithOverviewMode(Z)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|38|call-virtual|Landroid/webkit/WebSettings;->setUseWideViewPort(Z)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|42|call-virtual|Landroid/webkit/WebSettings;->setMediaPlaybackRequiresUserGesture(Z)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|47|call-virtual|Landroid/webkit/WebSettings;->setMixedContentMode(I)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|52|field-read-instance|Lcom/cteno/tvshell/MainActivity;->web:Landroid/webkit/WebView;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|56|call-direct|Lcom/cteno/tvshell/MainActivity$1;-><init>(Lcom/cteno/tvshell/MainActivity;)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|59|call-virtual|Landroid/webkit/WebView;->setWebViewClient(Landroid/webkit/WebViewClient;)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|62|field-read-instance|Lcom/cteno/tvshell/MainActivity;->web:Landroid/webkit/WebView;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|66|call-direct|Lcom/cteno/tvshell/MainActivity$2;-><init>(Lcom/cteno/tvshell/MainActivity;)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|69|call-virtual|Landroid/webkit/WebView;->setWebChromeClient(Landroid/webkit/WebChromeClient;)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|72|field-read-instance|Lcom/cteno/tvshell/MainActivity;->web:Landroid/webkit/WebView;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|74|call-virtual|Lcom/cteno/tvshell/MainActivity;->setContentView(Landroid/view/View;)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|78|call-virtual|Lcom/cteno/tvshell/MainActivity;->getIntent()Landroid/content/Intent;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|86|call-virtual|Landroid/content/Intent;->getStringExtra(Ljava/lang/String;)Ljava/lang/String;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|92|call-virtual|Landroid/content/Intent;->getStringExtra(Ljava/lang/String;)Ljava/lang/String;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|101|call-direct|Ljava/lang/StringBuilder;-><init>()V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|106|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|110|field-read-static|Landroid/os/Build$VERSION;->SDK_INT:I\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|112|call-virtual|Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|118|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|122|field-read-static|Landroid/os/Build;->CPU_ABI:Ljava/lang/String;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|124|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|128|call-virtual|Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|134|call-static|Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|139|call-direct|Ljava/lang/StringBuilder;-><init>()V\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|144|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|148|call-virtual|Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|152|call-virtual|Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|156|call-static|Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|159|field-read-instance|Lcom/cteno/tvshell/MainActivity;->web:Landroid/webkit/WebView;\nXREF|Lcom/cteno/tvshell/MainActivity;->onCreate(Landroid/os/Bundle;)V|161|call-virtual|Landroid/webkit/WebView;->loadUrl(Ljava/lang/String;)V\nXREF|Lcom/cteno/tvshell/MainActivity;->onDestroy()V|0|field-read-instance|Lcom/cteno/tvshell/MainActivity;->web:Landroid/webkit/WebView;\nXREF|Lcom/cteno/tvshell/MainActivity;->onDestroy()V|4|field-read-instance|Lcom/cteno/tvshell/MainActivity;->web:Landroid/webkit/WebView;\nXREF|Lcom/cteno/tvshell/MainActivity;->onDestroy()V|6|call-virtual|Landroid/webkit/WebView;->destroy()V\nXREF|Lcom/cteno/tvshell/MainActivity;->onDestroy()V|10|field-write-instance|Lcom/cteno/tvshell/MainActivity;->web:Landroid/webkit/WebView;\nXREF|Lcom/cteno/tvshell/MainActivity;->onDestroy()V|12|call-super|Landroid/app/Activity;->onDestroy()V\nXREF|Lcom/cteno/tvshell/MainActivity;->onKeyDown(ILandroid/view/KeyEvent;)Z|3|call-virtual|Lcom/cteno/tvshell/MainActivity;->finish()V\nXREF|Lcom/cteno/tvshell/MainActivity;->onKeyDown(ILandroid/view/KeyEvent;)Z|8|call-super|Landroid/app/Activity;->onKeyDown(ILandroid/view/KeyEvent;)Z\nXREF|Lcom/cteno/tvshell/R;-><init>()V|0|call-direct|Ljava/lang/Object;-><init>()V\n"
@@ -456,7 +456,7 @@ fn golden_fx_multidex2_xref() -> String {
 // GOLDEN-END dex/fx-multidex2.xref.norm.txt
 
 ///|
-/// xref kind 标签（wp2-contract §4 固定映射表；与 CLI 侧 util.mbt xref_kind_label 同表）。
+/// xref kind 标签（固定映射表；与 CLI 侧 util.mbt xref_kind_label 同表）。
 fn fx_xref_kind_label(k : @dex.XrefKind) -> String {
   match k {
     XrefCallVirtual => "call-virtual"
@@ -472,7 +472,7 @@ fn fx_xref_kind_label(k : @dex.XrefKind) -> String {
 }
 
 ///|
-/// 站点目标名（wp2-contract §5 形态）：Field* → field_ref_name；Call* → method_ref_name。
+/// 站点目标名（渲染形态）：Field* → field_ref_name；Call* → method_ref_name。
 fn fx_xref_target_name(
   d : @dex.DexFile,
   s : @dex.XrefSite,
@@ -487,7 +487,7 @@ fn fx_xref_target_name(
 }
 
 ///|
-/// 解析侧 xref 黄金规范化（wp2-contract §4/§5 口径）：class_def 序 → direct → virtual，
+/// 解析侧 xref 黄金规范化（口径见 tests/ASSETS.md §2）：class_def 序 → direct → virtual，
 /// 经 method_ref_of 桥接取 sites_in（offset 升序），渲染
 /// `XREF|<caller_ref>|<offset>|<kind>|<target_ref>`；末行带换行；
 /// 无访问点返回 ""（0 字节黄金）。
@@ -536,9 +536,9 @@ fn fx_canon_xref(d : @dex.DexFile) -> String raise @dex.DexError {
 }
 
 ///|
-/// xref 黄金差分（WP-4 R3，2026-11-08）：解析侧 fx_canon_xref 输出 == 内嵌黄金常量
-/// （= fixtures/golden/dex/<id>.xref.norm.txt，golden-diff.ps1 -Update 注入）。
-/// 三方一致：工具侧 Get-XrefNorm == 解析侧 == 黄金文件逐行。
+/// xref 黄金差分（2026-11-08）：解析侧 fx_canon_xref 输出 == 内嵌黄金常量。
+/// 三方一致（交叉恒等式）：工具侧 dexdump -d 抽取 == 解析侧 == 内嵌黄金逐行
+///（口径说明见 tests/ASSETS.md §2）。
 test "golden dex xref tvshell-debug" {
   let d = @dex.parse(fixture_tvshell_dex())
   assert_eq(

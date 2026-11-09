@@ -1,12 +1,13 @@
-// WP-2 注解语义测试（R2 语义补全轮新增文件）。
+// 注解语义测试（语义补全批次新增文件）。
 //
 // 覆盖：annotation_directory_item（class/field/method/parameter 四类）、
 // annotation_set_item、annotation_item、encoded_annotation 与 encoded_value
 // 全 16 类型解码（含数组/枚举/嵌套注解/NULL/FIELD/METHOD 与最小宽度编码）。
 //
-// 真实样本佐证（dexdump -d -a 逐值核对，dexdump 位于 D:\Android\Sdk\build-tools\35.0.0）：
-//   1) AnnoSample.dex —— WP-2 自建：AnnoSample.java 经 javac 21 + d8 生成（受控，非第三方）；
-//   2) tvshell-debug.classes.dex —— 受控 APK 提取（来源与 SHA-256 见 fixture 注释）。
+// 真实样本佐证（dexdump -d -a 逐值核对，dexdump 为 Android build-tools 35.0.0）：
+//   1) AnnoSample.dex —— 自建：AnnoSample.java 经 javac 21 + d8 生成（受控，非第三方，
+//      见 tests/ASSETS.md）；
+//   2) tvshell-debug.classes.dex —— 受控 APK 提取（来源与 SHA-256 见 tests/ASSETS.md）。
 // 程序化 fixture 仅用于 d8 不会生成的 VALUE_FIELD/VALUE_METHOD/窄宽/错误路径覆盖，
 // 不冒充真实格式兼容性；真实语义一律以真实样本佐证。
 //
@@ -433,7 +434,7 @@ fn sem_fixture_bytes(fx : SemFixture) -> Bytes {
 }
 
 ///|
-/// L2 真实样本（自建受控）：AnnoSample.java（WP-2 编写，覆盖注解全类型值与静态初值）
+/// L2 真实样本（自建受控）：AnnoSample.java（自建，覆盖注解全类型值与静态初值）
 /// 经 javac 21 --release 8 + d8（Android build-tools 35.0.0）生成的 classes.dex
 /// （4264 字节，DEX 035）。SHA-256=
 /// 16dbf2d6cb0c56a09312af1a1d22ef955fa74c7873a95d326124b4751bc52d0d。

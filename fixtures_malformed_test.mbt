@@ -1,6 +1,6 @@
-// WP-G / Q1 畸形派生用例（R2 准备轮新增文件）：从**真实** classes.dex 派生，
+// 畸形派生用例：从**真实** classes.dex 派生，
 // 覆盖截断 / 偏移污染 / 错误 checksum / 表偏移（索引）污染。断言目标：报 `DexError`
-// 而非 panic。样本来源与哈希见 fixtures/golden/ASSETS.md。
+// 而非 panic。样本来源与哈希见 tests/ASSETS.md。
 
 ///|
 /// 字节级变异：拷贝后把 `offset` 处改成 `value`。
@@ -153,7 +153,7 @@ test "dex malformed: 表偏移污染越过 checksum 后报 BadTableOffset" {
 
 ///|
 /// map_off 越界检查位于 class_data 解析之后；`parse_class_data` 分段复位缺陷修复
-/// （R2 主控，2026-11-07）后本用例启用。
+///（2026-11-07，见 DECISIONS.md D3）后本用例启用。
 test "dex malformed: map_off 越界报 UnexpectedEof" {
   let src = fixture_tvshell_dex()
   // map_off（header 偏移 52）指向文件尾之外 -> UnexpectedEof(map_off)
@@ -198,9 +198,9 @@ test "dex malformed: 未知 chunk [SKIPPED: DEX 无 chunk 概念]" {
 }
 
 ///|
-/// 受控构建多 dex 样本（WP-4 2026-11-07）派生：两个 DEX 条目各自覆盖
+/// 受控构建多 dex 样本（2026-11-07）派生：两个 DEX 条目各自覆盖
 /// 截断 / magic 污染 / 表偏移污染，同样只报 `DexError` 而非 panic。
-/// 样本性质：受控自产（aapt2/d8/apksigner 构建），见 fixtures/golden/ASSETS.md。
+/// 样本性质：受控自产（javac/d8 受控构建），见 tests/ASSETS.md。
 test "dex malformed: 多 dex 样本截断与污染报错且不 panic" {
   let src = fixture_fx_multidex_dex()
   let src2 = fixture_fx_multidex2_dex()

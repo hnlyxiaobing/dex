@@ -1,8 +1,8 @@
 ///|
-/// WP-3 dex-cli 视图渲染：summary / norm（文本记录行与 --json 两种形态）。
-/// norm 记录行口径与 fixtures/golden/dex/*.dexparse.norm.txt 一致
+/// dex-cli 视图渲染：summary / norm（文本记录行与 --json 两种形态）。
+/// norm 记录行口径与 dexdump 规范化黄金一致（见 tests/ASSETS.md §2）
 /// （HDR 子集 + STR + CLZ + MTH + OPS 全方法 opcode 序列）；summary 在同口径上
-/// 扩展 CLSM（类元数据）/ FLD（字段）与 ANN/SVC（WP-2 注解/静态初值，已接线）。
+/// 扩展 CLSM（类元数据）/ FLD（字段）与 ANN/SVC（注解/静态初值，已接线）。
 
 ///|
 /// HDR 记录行（golden 口径 11 键）。
@@ -23,7 +23,7 @@ fn hdr_lines(d : @dex.DexFile) -> Array[String] {
 }
 
 ///|
-/// 全方法 opcode 序列渲染（golden dexparse 口径，WP-4 2026-11-07）：
+/// 全方法 opcode 序列渲染（golden dexparse 口径，2026-11-07）：
 /// `OPS|<class>|<name>|<proto>|<n>|<m0> <m1> ...`；code-less 方法 n=0 空序列。
 fn ops_line(
   cls : String,
@@ -76,7 +76,7 @@ fn norm_lines(d : @dex.DexFile) -> Array[String] {
       )
     }
   }
-  // OPS：全方法 opcode 序列（golden-diff 同口径）：类序 -> direct -> virtual。
+  // OPS：全方法 opcode 序列（与黄金同口径）：类序 -> direct -> virtual。
   for c in d.classes {
     for m in c.direct_methods {
       out.push(
@@ -113,7 +113,7 @@ fn vis_name(v : @dex.AnnotationVisibility) -> String {
 }
 
 ///|
-/// EncodedValue 文本渲染（常量可见；名字为 WP-2 解析好的 smali 风格）：
+/// EncodedValue 文本渲染（常量可见；名字为解析好的 smali 风格）：
 /// 数值十进制、char 可打印 ASCII `'c'` 否则 `U+XXXX`、字符串带引号转义、
 /// 类型/字段/方法/枚举原样（Lcls;… / Lcls;->name:type / Lcls;->name(…)…）、
 /// 数组 `[v,…]` 递归、注解 `Ltype;{name=value;…}` 递归。
@@ -184,8 +184,8 @@ fn ann_elements_text(elements : Array[@dex.AnnotationElement]) -> String {
 }
 
 ///|
-/// [已接线 · WP-2 注解] 类注解摘要（annotations_directory_item）。
-/// `data` 为原始 DEX 字节（WP-2 API 首参）；`class_index` 为 class_defs 表位置。
+/// 类注解摘要（annotations_directory_item）。
+/// `data` 为原始 DEX 字节（API 首参）；`class_index` 为 class_defs 表位置。
 /// 记录：`ANN|<target>|<visibility>|<type>|<elements>`；
 /// target：类=描述符；字段/方法=smali 引用（Lcls;->name:type / Lcls;->name(params)ret）；
 /// 形参=方法引用 + `#p<序号>`；visibility=build|runtime|system。
@@ -239,7 +239,7 @@ fn ann_lines(
 }
 
 ///|
-/// [已接线 · WP-2 静态初值] class_def 的 encoded_array static_values 摘要。
+/// class_def 的 encoded_array static_values 摘要。
 /// `data` 为原始 DEX 字节；`class_index` 为 class_defs 表位置；
 /// `static_values` 返回静态字段前缀省略编码（空数组=无初值）。
 /// 记录：`SVC|<cls>|<i>|<value>`；i 为该类静态字段序号（与 FLD 记录顺序对应）。
@@ -261,7 +261,7 @@ fn svc_lines(
 }
 
 ///|
-/// summary 视图记录行：HDR + 每类 CLSM / FLD / MTH + ANN/SVC（WP-2 已接线）。
+/// summary 视图记录行：HDR + 每类 CLSM / FLD / MTH + ANN/SVC（注解/静态初值已接线）。
 fn summary_lines(
   data : Bytes,
   d : @dex.DexFile,
@@ -425,8 +425,8 @@ fn json_svc_array(
 }
 
 ///|
-/// [已接线 · WP-2 xref] 站点目标名：Field* → field_ref_name；
-/// Call* → method_ref_name（wp2-contract §5 接线形态逐字口径）。
+/// 站点目标名：Field* → field_ref_name；
+/// Call* → method_ref_name（smali 风格渲染）。
 fn xref_target_name(
   d : @dex.DexFile,
   s : @dex.XrefSite,
@@ -441,7 +441,7 @@ fn xref_target_name(
 }
 
 ///|
-/// [已接线 · WP-2 xref] 黄金序站点收集（wp2-contract §4 排序承诺）：
+/// 黄金序站点收集（排序承诺）：
 /// caller 序 = MTH/OPS 同序（class_def 序 → direct_methods → virtual_methods，
 /// 经 method_ref_of 桥接）× caller 内 offset 升序（sites_in 冻结排序）。
 fn xref_sites_ordered(
@@ -473,7 +473,7 @@ fn xref_sites_ordered(
 }
 
 ///|
-/// [已接线 · WP-2 xref] xref 视图记录行（wp2-contract §4/§5 黄金口径）：
+/// xref 视图记录行（黄金口径，见 tests/ASSETS.md §2）：
 /// `XREF|<caller_ref>|<offset>|<kind>|<target_ref>`；
 /// caller_ref/target_ref 复用 method_ref_name/field_ref_name 渲染，
 /// offset 为十进制 code-unit 偏移；无访问点 = 空数组（0 行）。

@@ -2,7 +2,7 @@
 /// Dalvik 指令解码：opcode → (助记符, 指令格式, 引用类型) 表与操作数格式化。
 /// 范围：AOSP dalvik-bytecode 中 0x00–0xE2 的 218 条已定义指令；
 /// 0x3E–0x43 / 0x73 / 0x79 / 0x7A 为未定义，0xE3–0xFF 超出本库范围
-/// （含 DEX 038+ 的 0xFA–0xFE，属 API.md 标注的 W3 延后项），解码到它们抛 `InvalidInstruction`。
+/// （含 DEX 038+ 的 0xFA–0xFE，本库指令表未定义、属延后项），解码到它们抛 `InvalidInstruction`。
 
 ///|
 /// 指令格式（决定宽度与操作数布局），对应 AOSP 十种基础格式。

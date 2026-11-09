@@ -1,7 +1,7 @@
 ///|
-/// WP-3 CLI 公共辅助（dex-cli）：JSON 转义、hex/签名/magic/proto 渲染。
+/// CLI 公共辅助（dex-cli）：JSON 转义、hex/签名/magic/proto 渲染。
 /// 仅使用 moonbitlang/core 与本模块公开 API；渲染口径与
-/// fixtures/golden/dex/*.dexparse.norm.txt 一致（dexdump 同构）。
+/// dexdump 规范化黄金一致（黄金值内嵌于测试，见 tests/ASSETS.md §2）。
 
 ///|
 /// JSON 字符串转义（RFC 8259 最小充分子集：引号、反斜杠、控制字符）。
@@ -160,8 +160,8 @@ fn opt_str(v : String?) -> String {
 }
 
 ///|
-/// [已接线 · WP-2 xref] XrefKind → 黄金口径固定标签（wp2-contract §4 标签表；
-/// 按仲裁 ⑨ 放 CLI 侧，库内不加 label 方法）。
+/// XrefKind → 黄金口径固定标签（固定标签表；
+/// 放 CLI 侧，库内不加 label 方法）。
 fn xref_kind_label(kind : @dex.XrefKind) -> String {
   match kind {
     XrefCallVirtual => "call-virtual"

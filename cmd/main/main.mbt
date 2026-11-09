@@ -1,7 +1,7 @@
 ///|
 /// dex-cli：DEX 反汇编/清单 CLI（hnlyxiaobing/dex 公开 API 驱动）。
-/// 契约（根 README.md）：退出码 0=成功 / 1=解析或IO错误 / 2=用法错误；
-/// 默认记录行输出（norm 口径与 fixtures/golden/dex/*.dexparse.norm.txt 一致），
+/// 契约：退出码 0=成功 / 1=解析或IO错误 / 2=用法错误；
+/// 默认记录行输出（norm 口径与 dexdump 规范化黄金一致，见 tests/ASSETS.md §2），
 /// `--json` 机器可读。APK 容器条目读取使用 moonbitlang/core/archive/zip（零跨模块依赖）。
 
 ///|
@@ -19,7 +19,7 @@ fn usage_text() -> String {
     "      FLD|cls|name|type|0xflags、MTH|cls|name|proto|0xflags，",
     "      ANN|target|visibility|type|elements（注解，已接线）、SVC|cls|i|value（静态初值，已接线）",
     "      norm：黄金规范化口径（HDR+STR+CLZ/MTH+OPS 全方法 opcode 序列），",
-    "      与 fixtures/golden/dex/*.dexparse.norm.txt 逐行一致",
+    "      与 dexdump 规范化黄金逐行一致（口径见 tests/ASSETS.md §2）",
     "      xref：调用点/字段访问点索引（XREF|<caller>|<offset>|<kind>|<target>，",
     "      kind=call-virtual|call-super|call-direct|call-static|call-interface|",
     "      field-read-static|field-write-static|field-read-instance|field-write-instance）",
@@ -271,9 +271,9 @@ fn json_disasm_section(
 }
 
 ///|
-/// [已接线 · WP-2 xref] xref 视图的 JSON 片段：`{"name":…,"sites":[…]}`；
+/// xref 视图的 JSON 片段：`{"name":…,"sites":[…]}`；
 /// 每站点 `{"method_ref":N,"offset":N,"kind":"<label>","target_ref":N}`
-/// （wp2-contract §5 `--json` 口径）；站点序与 XREF| 记录行同序。
+/// （`--json` 口径）；站点序与 XREF| 记录行同序。
 fn json_xref_section(
   name : String,
   d : @dex.DexFile,

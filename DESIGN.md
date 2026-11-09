@@ -1,10 +1,10 @@
 # dex · 设计契约（DESIGN.md）
 
-> Round-1 / 2026-11-06 ｜ R2 冻结前整改更新 2026-11-07 ｜ 状态：**已实现**（表解析 / code_item / 指令解码 / smali 输出均为真实实现），门禁全绿；真实样本 P0 缺陷已修复（见 §13）
+> 初版 2026-11-06 ｜ 更新 2026-11-07 ｜ 状态：**已实现**（表解析 / code_item / 指令解码 / smali 输出均为真实实现），门禁全绿（`moon test` 84/84）；真实样本 P0 缺陷已修复（见 §13）
 
 ## 1. 分层位置与职责
 
-L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → 结构化表 + code_item + 指令流**。`apk` 只给 `DexEntry.bytes`，由组合根调用本库（ADR-0003）。
+L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → 结构化表 + code_item + 指令流**。`apk` 只给 `DexEntry.bytes`，由组合根调用本库（模块边界决策见 `DECISIONS.md` D1）。
 
 ## 2. 模块边界 / 依赖方向 / 数据流
 
@@ -29,15 +29,16 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 | `DexVersion` / `TableKind` | magic 版本与表类别（用于错误定位） |
 | `MethodHandle` | 方法定位句柄（`Int` 别名） |
 | `Disassembler` trait | 只读反汇编契约，便于替换文本后端 |
-| `AnnotationVisibility` / `EncodedValue` / `EncodedAnnotation` / `AnnotationElement` / `Annotation` / `AnnotationSet` | （R2 WP-2）annotation_item / encoded_annotation / encoded_value 全类型结构化解码 |
-| `AnnotationsDirectory` / `FieldAnnotations` / `MethodAnnotations` / `ParameterAnnotations` | （R2 WP-2）annotation_directory_item 四类注解目录 |
-| `InsnOperands` / `IndexKind` | （R2 WP-2）指令结构化操作数视图（加法性；`Instruction` 未动） |
+| `AnnotationVisibility` / `EncodedValue` / `EncodedAnnotation` / `AnnotationElement` / `Annotation` / `AnnotationSet` | annotation_item / encoded_annotation / encoded_value 全类型结构化解码 |
+| `AnnotationsDirectory` / `FieldAnnotations` / `MethodAnnotations` / `ParameterAnnotations` | annotation_directory_item 四类注解目录 |
+| `InsnOperands` / `IndexKind` | 指令结构化操作数视图（加法性；`Instruction` 未动） |
+| `XrefSite` / `XrefKind` / `XrefIndex` | 调用点 / 字段访问点索引（加法性；`build_xref` 产出） |
 
 ## 4. 错误模型
 
 `DexError`：`UnexpectedEof(Int)`、`BadMagic(String)`、`UnsupportedVersion(String)`、`BadTableOffset(TableKind, Int)`、`InvalidIndex(TableKind, Int)`、`InvalidInstruction(Int, Int)`、`BadCodeItem(Int, String)`、`BadDebugInfo(Int, String)`、`MultiDexNotMerged(String)`。
 
-全部 `raise DexError`；禁止 panic；带 `TableKind` / 索引 / 偏移便于黄金样本差分定位。`TableKind` 已 `#derive(Debug)` 以满足错误类型的 `Debug` 派生约束。
+全部 `raise DexError`；禁止 panic；带 `TableKind` / 索引 / 偏移便于黄金样本差分定位。`TableKind` 已 `#derive(Debug)` 以满足错误类型的 `Debug` 派生约束。（口径依据见 `DECISIONS.md` D4。）
 
 ## 5. 资源生命周期
 
@@ -52,8 +53,8 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 ## 7. 平台约束与外部依赖
 
 - `preferred_target = "wasm"`（未改动），全后端。
-- 外部依赖：无。规范 AOSP；`classfile@0.2.0` 仅设计参照（legacy，不可直接依赖）。
-- 分阶段：MVL-R 只需 header + 六表 + 方法名；`code_item` 与 218 条指令解码属 W3。
+- 外部依赖：无。规范 AOSP；`classfile@0.2.0` 仅设计参照（legacy，不可直接依赖，见 `DECISIONS.md` D2）。
+- 分阶段：上层早期只需 header + 六表 + 方法名；`code_item` 与 218 条指令解码随后补齐（顺序见 `DECISIONS.md` D5）。
 
 ## 8. 输入输出类型与错误传播（纯 MoonBit 库）
 
@@ -63,9 +64,10 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 | `DexFile + class_index` | `Array[MethodDef]` | `InvalidIndex` |
 | `DexFile + MethodHandle` | `CodeItem?`（abstract/native 为 `None`） | `DexError` |
 | `DexFile + MethodHandle` | `String`（smali 文本） | `InvalidInstruction` 等 |
-| `Bytes + class_index`（R2 WP-2） | `AnnotationsDirectory?` / `Array[EncodedValue]` | `DexError`（截断 `UnexpectedEof`、索引 `InvalidIndex`、结构 `BadTableOffset`） |
-| `Instruction`（R2 WP-2） | `InsnOperands` | `InvalidInstruction` |
-| `DexFile + Int`（R2 WP-2） | `String`（引用名字解析） | `InvalidIndex` |
+| `Bytes + class_index` | `AnnotationsDirectory?` / `Array[EncodedValue]` | `DexError`（截断 `UnexpectedEof`、索引 `InvalidIndex`、结构 `BadTableOffset`） |
+| `Instruction` | `InsnOperands` | `InvalidInstruction` |
+| `DexFile + Int` | `String`（引用名字解析） | `InvalidIndex` |
+| `DexFile` | `XrefIndex`（调用点/字段访问点） | `DexError`（`InvalidIndex` 等） |
 
 `Option` 表达"正常无结果"，`raise` 表达"失败"，二者不混用。
 注解/静态初值入口**自含**（传原始 `Bytes` + class_defs 位置，内部共享 `read_ctx`
@@ -78,60 +80,66 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 
 ## 10. 测试策略
 
-| 层次 | 内容 | 实跑状态（2026-11-07） |
+| 层次 | 内容 | 实跑状态（2026-11-07 起） |
 |---|---|---|
-| 黑盒（程序化 fixture，L0） | 六表、class_def、code_item、方法名、magic/checksum 错误路径 | ✅ 37 例 |
-| 黑盒（真实样本，L1/L2，R2 WP-G 新增） | 内嵌真实 `classes.dex`（tvshell-debug 4368 B、motionshell 3148 B）；`dexdump` 规范化黄金 `fixtures/golden/dex/*.norm.txt` 与解析输出逐字段 diff | ✅ 工具侧 + **解析侧全通**（P0 缺陷已修复，§13） |
-| 畸形派生（R2 新增 `fixtures_malformed_test.mbt`） | 从真实 dex 派生：截断 / magic 污染 / 错误 checksum / 表偏移污染 / 未知 opcode（重算 adler32 后直达结构错误）；断言报 `DexError` 而非 panic | ✅ 5 例 |
-| 注解/常量值语义（R2 WP-2 `dex_sem_annotations_test.mbt` / `dex_sem_consts_test.mbt`） | 四类注解目录、encoded_value 全 16 类型（含 VALUE_FIELD/METHOD/ENUM/NULL/窄宽/左对齐浮点）、嵌套注解、static_values 前缀语义、错误路径；真实样本 = javac21+d8 自建 AnnoSample.dex（4264 B，SHA-256 16dbf2d6…52d0d）+ tvshell（VALUE_METHOD/VALUE_NULL/加密字符串入口），`dexdump -d -a` 逐值核对 | ✅ 15 例 |
-| 结构化操作数（R2 WP-2 `dex_sem_operand_test.mbt`） | 十种操作数格式的 regs/literal/branch/index 视图、payload 空视图、名字解析 helper、真实样本 main/Kind.\<clinit\> 与 dexdump `// method@00xx` 等对照 | ✅ 5 例 |
-| 白盒 | 六表索引边界、`code_item` 偏移、try/catch、`debug_info` | ✅ |
-| 门禁 | `moon fmt --check` / `moon check --deny-warn` / `moon build` / `moon test` | ✅ 全绿（72/72） |
+| 黑盒（程序化 fixture，`dex_test.mbt`） | 六表、class_def、code_item、方法名、magic/checksum 错误路径 | ✅ 26 例 |
+| 白盒（`dex_wbtest.mbt`） | 六表索引边界、`code_item` 偏移、try/catch、`debug_info`、opcode 表边界 | ✅ 11 例 |
+| 黑盒（真实样本，`fixtures_test.mbt`） | 内嵌真实 `classes.dex`（tvshell-debug 4368 B、motionshell 3148 B、fx-multidex 2116 B + 1640 B）；**内嵌黄金期望值**（`fixtures_test.mbt` 黄金常量，`dexdump` 规范化口径）与解析输出逐字段 diff + 冒烟 | ✅ 12 例（工具侧 + **解析侧全通**，P0 缺陷已修复，§13） |
+| 畸形派生（`fixtures_malformed_test.mbt`） | 从真实 dex 派生：截断 / magic 污染 / 错误 checksum / 表偏移污染 / `map_off` 越界 / 未知 opcode / 多 dex 截断与污染（重算 adler32 后直达结构错误）；断言报 `DexError` 而非 panic | ✅ 7 例 |
+| 注解/常量值语义（`dex_sem_annotations_test.mbt` 9 + `dex_sem_consts_test.mbt` 5） | 四类注解目录、encoded_value 全 16 类型（含 VALUE_FIELD/METHOD/ENUM/NULL/窄宽/左对齐浮点）、嵌套注解、static_values 前缀语义、错误路径；真实样本 = javac 21 + d8 自建 AnnoSample.dex（4264 B，SHA-256 `16dbf2d6…52d0d`，见 `tests/ASSETS.md`）+ tvshell（VALUE_METHOD/VALUE_NULL/加密字符串入口），`dexdump -d -a` 逐值核对 | ✅ 14 例 |
+| 结构化操作数（`dex_sem_operand_test.mbt`） | 十种操作数格式的 regs/literal/branch/index 视图、payload 空视图、名字解析 helper、真实样本 main/Kind.\<clinit\> 与 dexdump `// method@00xx` 等对照 | ✅ 6 例 |
+| xref 索引（`xref_test.mbt`） | 计数恒等式与 kind/opcode 族一致、invoke 五族与字段四类分类、abstract/native/外部方法口径、越界 `InvalidIndex`、payload 不产 site、排序稳定、`method_ref_of` 反查 | ✅ 8 例 |
+| 门禁 | `moon fmt --check` / `moon check --deny-warn` / `moon build` / `moon test` | ✅ 全绿（84/84） |
 
 skip 机制：MoonBit 原生 `#skip` 属性（默认不计入 `Total tests`；`moon test --include-skipped` 才执行）。
-所有未跑通/未内嵌的用例都用 `#skip` 显式标注，**绝不冒充通过**。
+所有未跑通/未内嵌的用例都用 `#skip` 显式标注（3 例：第三方样本未提取、L3 真机、DEX 无 chunk 概念），**绝不冒充通过**。
 
-## 11. 验收标准（实现轮）
+## 11. 验收标准（实现阶段）
 
-1. 两个 APK 全部 dex 解析无崩溃 —— ✅ **达成**（P0 缺陷修复后真实 DEX 解析通过，47/47）；
-2. 反汇编抽样与 dexdump 一致 —— ✅ 解析侧差分已启用并全通；
-3. 黄金样本进 `moon test` —— ✅ L1/L2 样本与黄金已入库，工具侧 + 解析侧差分全通；
-4. `moon check --deny-warn` 转绿 —— ✅（原定 R4，已提前达成）。
+1. 真实 APK 的全部 dex 解析无崩溃 —— ✅ **达成**（P0 缺陷修复后真实 DEX 解析通过）；
+2. 反汇编与 dexdump 一致 —— ✅ 解析侧差分已启用并全通；
+3. 黄金样本进 `moon test` —— ✅ 样本与黄金期望值已内嵌测试（`moon test` 即回归），工具侧 + 解析侧差分全通；
+4. `moon check --deny-warn` 转绿 —— ✅。
 
 ## 12. 未解决问题 / 待验证假设
 
-- DEX v041 / 厂商加固 DEX 的实际分布未验证（Q1 已定位候选资产，但目标游戏 APK 许可不明未入库，见
-  `../docs/open-questions.md` §2.1）。
-- `aapt2`/`dexdump` 官方差分套件是否存在未证实（Q6）；本轮已自建 `fixtures/golden/golden-diff.ps1` 三链差分。
+- DEX v041 / 厂商加固 DEX 的实际分布未验证（候选真实 APK 许可不明、未入库，仅开发期差分复核，
+  见 `tests/ASSETS.md`）。
+- `aapt2`/`dexdump` 官方 fuzz / 差分测试套件是否存在未证实；已以自建黄金差分替代（黄金期望值
+  内嵌测试代码，`moon test` 即回归，见 `tests/ASSETS.md` §2）。
 - ARM64 指令边界判断若未来给 `ptrace_lite` 用，需要额外反汇编支持。
 
 ## 13. 当前状态与 TODO
 
-`dex.mbt` / `parse.mbt` / `instr.mbt` / `disasm.mbt` 已全部实现（**无 `declare`、无 `0068`**），
+`dex.mbt` / `parse.mbt` / `instr.mbt` / `disasm.mbt` / `xref.mbt` 已全部实现（**无 `declare`、无 `0068`**），
 公开 API 有 `///` 文档注释；字段名避开保留字 `method`（改用 `method_ref`）。
 
-**R2 WP-G 新增（2026-11-07）**：L1 真实样本（`tests/fixtures/*.classes.dex`）+ L2 黄金
-（`fixtures/golden/dex/*.norm.txt`）+ 畸形派生用例 + 三链差分脚本。
+**真实样本与黄金差分（2026-11-07）**：L1 真实样本（`tests/fixtures/*.classes.dex`）+ 黄金
+期望值内嵌（`fixtures_test.mbt` 黄金常量）+ 畸形派生用例 + 三方差分（开发期脚本驱动
+"工具侧 ↔ 黄金 ↔ 解析侧"，方法与结论见 `tests/ASSETS.md` §2；黄金值已内嵌，`moon test` 即回归）。
 
-**⚠ P0 缺陷（WP-G 登记 → R2 主控已修复，2026-11-07）**：`parse_class_data` 曾把 `method_idx_diff`
+**⚠ P0 缺陷（黄金差分首跑发现，2026-11-07 已修复）**：`parse_class_data` 曾把 `method_idx_diff`
 在 direct/virtual 两段**连续累加**，而 AOSP libdex/dexdump 在每段各自从 0 累加（`static_fields`/
 `instance_fields` 同理）。实测（tvshell-debug，`method_ids_size=43`）：dexdump 报 24,25,26 / 27,28 /
 29,33,34,35；连续累加得 24,49,50 / 27,55 / 29,62,63,64 —— 越界抛 `InvalidIndex(MethodId, 49)`。
 **修复**：进入 instance/virtual 分段时索引复位（`parse.mbt::parse_class_data`）；修复后真实样本
-解析侧差分启用，`golden-diff.ps1 -Chain dex` 全通 exit 0，dex 全部门禁 47/47。
+解析侧差分启用并全通 exit 0。防回归记录见 `DECISIONS.md` D3。
 
-**R2 WP-2 语义补全（2026-11-07）**：新增注解语义（annotation_directory_item 四类 /
+**语义补全（2026-11-07）**：新增注解语义（annotation_directory_item 四类 /
 annotation_set_item / annotation_item / encoded_annotation / encoded_value 全 16 类型，
 `semval.mbt` + `annot.mbt`）、静态初值/encoded_array（加密字符串入口）、指令结构化操作数
 视图与名字解析 helper（`operand.mbt`）。**全部加法性**（mbti 快照 106 行插入 / 0 删除，
 冻结面零改动；`DexError` 构造集合未扩）。内部重构：`parse_dex` 的头部校验与五表读取
-以纯代码搬移抽出 `validate_header` / `read_ctx` 供新入口共享（行为等价，47 例基线 + 黄金差分全保）。
+以纯代码搬移抽出 `validate_header` / `read_ctx` 供新入口共享（行为等价，基线用例 + 黄金差分全保）。
 编码布局实证钉死：format=(arg<<5)|type、type 码表（byte=0x00…boolean=0x1f）、
 整型右对齐符号扩展、**float/double 左对齐低位补零**（dexdump 对照：3.5f 存 `60 40`）；
 AnnotationDefault.value 实证为 **VALUE_ANNOTATION 嵌套注解**（非数组）；
 tvshell 实证 VALUE_METHOD（EnclosingMethod）与 VALUE_NULL（InnerClass.name）。
-门禁 72/72 全绿。
+
+**xref 索引（2026-11-08）**：新增 `xref.mbt`（`build_xref` / `XrefIndex` / `XrefSite` /
+`XrefKind`，加法性），把每条 `invoke-*`/`iget-*`/`iput-*`/`sget-*`/`sput-*` 指令解码为一个
+访问点；与 `dexdump -d` 指令行抽取口径三方一致（见 `tests/ASSETS.md` §2）。
 
 ## References
 
-`../docs/research-and-verification.md` §2.1 · `../docs/adr/ADR-0001`、`ADR-0002`、`ADR-0005` · `https://source.android.com/docs/core/dalvik/dalvik-bytecode` · `https://github.com/JesusFreke/smali`
+`DECISIONS.md`（设计决策：模块边界 / 选型 / P0 缺陷记录 / 错误模型 / 开发顺序）· `tests/ASSETS.md`（样本来源与黄金口径）· `https://source.android.com/docs/core/dalvik/dalvik-bytecode` · `https://github.com/JesusFreke/smali`

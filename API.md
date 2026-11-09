@@ -1,15 +1,15 @@
 # dex · 公开 API（API.md）
 
-> 与 `pkg.generated.mbti` 逐项对账（R2 冻结前整改，2026-11-07）。**全部函数为真实实现**，
-> 包内**没有 `declare` 存根**；`moon check --deny-warn` 0 error / 0 warning（原 `0068` 已消失）。
+> 与 `pkg.generated.mbti` 逐项对账（2026-11-07 整改）。**全部函数为真实实现**，
+> 包内**没有 `declare` 存根**；`moon check --deny-warn` 0 error / 0 warning。
 > 错误传播统一 `raise DexError`；无外部句柄。
 >
-> ⚠ **真实样本 P0 缺陷已修复（R2 主控，2026-11-07）**：WP-G 黄金差分首跑发现 `parse` 对真实 DEX 抛
+> ⚠ **真实样本 P0 缺陷已修复（2026-11-07）**：黄金差分首跑发现 `parse` 对真实 DEX 抛
 > `InvalidIndex(MethodId, 49)`——`class_data_item` 的 `method_idx_diff` 未在 direct/virtual
-> 分段处复位（AOSP libdex/dexdump 两段各自从 0 累加）。**本轮已修复**（`parse_class_data` 分段复位，
+> 分段处复位（AOSP libdex/dexdump 两段各自从 0 累加）。**已修复**（`parse_class_data` 分段复位，
 > `static_fields`/`instance_fields` 同理），`dexdump ↔ @dex.parse` 黄金差分**解析侧已启用并全通**
 > （tvshell-debug 与 motionshell 均 exit 0）。修复记录见 `fixtures_test.mbt` 顶部注释、
-> `fixtures/golden/ASSETS.md` §6、`docs/open-questions.md` §2.1。
+> `DECISIONS.md` D3 与 `tests/ASSETS.md`。
 
 ## 类型
 
@@ -28,6 +28,7 @@
 | `EncodedAnnotation` / `AnnotationElement` / `Annotation` / `AnnotationSet` | `pub(all) struct` | annotation_item / encoded_annotation / 注解集 |
 | `AnnotationsDirectory` + `FieldAnnotations` / `MethodAnnotations` / `ParameterAnnotations` | `pub(all) struct` | annotation_directory_item 四类目录 |
 | `InsnOperands` / `IndexKind` | `pub(all) struct` / `enum` | 指令结构化操作数视图（加法性，不动 `Instruction`） |
+| `XrefSite` / `XrefKind` / `XrefIndex` | `pub(all) struct` / `enum` / `struct` | 调用点 / 字段访问点索引（加法性新增） |
 
 ## 函数签名
 
@@ -38,9 +39,9 @@
 | `DexFile::methods(self, class_index : Int) -> Array[MethodDef] raise DexError` | `class_index` 为表索引 | direct+virtual 方法 / `InvalidIndex` | 无状态 | 索引校验 |
 | `DexFile::code(self, method_ref : MethodHandle) -> CodeItem? raise DexError` | `method_ref` 定位方法 | `None` = abstract/native；失败 `DexError` | 无状态 | try/catch、debug_info 偏移 |
 | `DexFile::strings(self) -> Array[String]` | `self` 只读 | string_id 顺序表 | 无状态 | — |
-| `disasm(dex : DexFile, method_ref : MethodHandle) -> String raise DexError` | 只读 | smali 风格文本 / `InvalidInstruction` | 无状态；不做 CFG/类型推断 | 218 条指令表（W3） |
+| `disasm(dex : DexFile, method_ref : MethodHandle) -> String raise DexError` | 只读 | smali 风格文本 / `InvalidInstruction` | 无状态；不做 CFG/类型推断 | 218 条指令表 |
 
-## 注解 / 静态初值（R2 WP-2 加法性新增）
+## 注解 / 静态初值（加法性新增）
 
 > ⚠ **接线注意**：入口自含，第一个参数是**原始 DEX `Bytes`**（不是 `DexFile`）。
 > `class_index` 为 **class_defs 表位置**（与 `DexFile::methods` 的 `class_index` 同义）。
@@ -63,7 +64,7 @@ null=0x1e boolean=0x1f；整型右对齐符号/零扩展（最小宽度），**f
 截断 → `UnexpectedEof`、索引越界 → `InvalidIndex(StringId/TypeId/FieldId/MethodId, idx)`、
 未定义 value_type/visibility/结构损坏 → `BadTableOffset(ClassDef, 偏移)`。
 
-## 结构化指令操作数 / 名字解析（R2 WP-2 加法性新增）
+## 结构化指令操作数 / 名字解析（加法性新增）
 
 > `Instruction` 冻结结构**未改动**；`InsnOperands` 为新增视图（从 `Instruction::raw` 重解码），
 > 文本 `operands`（smali 风格）行为不变。名字格式与 `disasm` 一致（smali `->`；
@@ -79,6 +80,28 @@ null=0x1e boolean=0x1f；整型右对齐符号/零扩展（最小宽度），**f
 | `resolve_ref_name(dex : DexFile, kind : IndexKind, index : Int32) -> String raise DexError` | 按 `IndexKind` 综合解析（`IndexNone` 抛 `InvalidIndex`） |
 | `instruction_ref_name(dex : DexFile, insn : Instruction) -> String? raise DexError` | 一步解析指令引用；无引用操作数返回 `None` |
 
+## 调用点 / 字段访问点索引（xref，加法性新增）
+
+> 每条 `invoke-*` / `iget-*` / `iput-*` / `sget-*` / `sput-*` 指令解码为一条 `XrefSite`
+> （caller 方法引用 + code 偏移 + kind + 目标引用），四元组与 `dexdump -d` 指令行抽取
+> 口径一致（见 `tests/ASSETS.md` §2 三方一致口径）。
+
+| 签名 | 说明 |
+|---|---|
+| `build_xref(dex : DexFile) -> XrefIndex raise DexError` | 全量扫描 `class_def` 产出索引 |
+| `method_ref_of(dex : DexFile, m : MethodDef) -> Int32?` | 方法定义 → method_ids 引用（`None` = 无对应引用） |
+| `XrefIndex::sites(self) -> Array[XrefSite]` | 全量访问点（副本，method_ref 升序 × offset 升序） |
+| `XrefIndex::sites_in(self, method_ref : Int32) -> Array[XrefSite] raise DexError` | 某方法体内的访问点（offset 升序） |
+| `XrefIndex::callers(self, target : Int32) -> Array[XrefSite] raise DexError` | 调用某方法/引用某字段的站点 |
+| `XrefIndex::callees(self, method_ref : Int32) -> Array[XrefSite] raise DexError` | 某方法调用的目标 |
+| `XrefIndex::method_sites(self, method_ref : Int32) -> Array[XrefSite] raise DexError` | 以某方法为目标的调用点 |
+| `XrefIndex::field_sites(self, field_ref : Int32) -> Array[XrefSite] raise DexError` | 以某字段为目标的访问点 |
+
+`XrefSite { method_ref : Int32, offset : Int32, target_ref : Int32, kind : XrefKind }`；
+`XrefKind` 九值：`XrefCallVirtual` / `XrefCallSuper` / `XrefCallDirect` / `XrefCallStatic` /
+`XrefCallInterface` / `XrefFieldReadStatic` / `XrefFieldWriteStatic` / `XrefFieldReadInstance` /
+`XrefFieldWriteInstance`（构造顺序即固定标签映射表顺序）。
+
 ## 错误构造速查
 
 `UnexpectedEof` · `BadMagic` · `UnsupportedVersion` · `BadTableOffset(TableKind, Int)` · `InvalidIndex(TableKind, Int)` · `InvalidInstruction(offset, opcode)` · `BadCodeItem` · `BadDebugInfo` · `MultiDexNotMerged`
@@ -91,26 +114,29 @@ CFG、Java 反编译、多 dex 合并、符号解析、DEX 写入/回编、oat/o
 `classes.dex` / `classes2.dex` … 由调用方（组合根）**逐 dex `parse` + 编排**——
 对每个 `DexEntry.bytes` 独立调用 `parse` / `class_annotations` / `static_values`，
 跨 dex 的类/引用解析由上层负责。喂入 ZIP/APK 容器或多 dex 拼接字节时入口明确报
-`MultiDexNotMerged`，不做隐式合并。
+`MultiDexNotMerged`，不做隐式合并（模块边界决策见 `DECISIONS.md` D1）。
 
-## 冻结标注（R2 WP-2）
+## 冻结标注（语义补全批次）
 
-本轮全部为**加法性新增**（`pkg.generated.mbti` 快照 diff 106 行插入 / 0 行删除）：
+该批次全部为**加法性新增**（`pkg.generated.mbti` 快照 diff 106 行插入 / 0 行删除）：
 既有公开签名（`parse` / `disasm` / 访问器 / `Instruction` / `ClassDef` / `DexFile` /
 `DexError` 等）**零改动**；结构化操作数以新增 `InsnOperands` 视图实现（保旧文本接口）；
 注解/常量值为新增类型与函数；`DexError` 构造集合未扩（注解结构错误复用既有构造）。
+其后新增的 xref 索引（`XrefIndex` / `XrefSite` / `XrefKind` / `build_xref` / `method_ref_of`）
+同为加法性新增。
 
 ## 状态
 
 | 门禁 | 结果 |
 |---|---|
-| `moon check --deny-warn` | ✅ 0 error / 0 warning（无 `0068`） |
+| `moon check --deny-warn` | ✅ 0 error / 0 warning |
 | `moon build` | ✅ |
-| `moon test` | ✅ 72 / 72（基线 47 + WP-2 注解/常量值/操作数 20 + WP-4 OPS 5；另有 3 个 `#skip` 用例不计入：第三方样本未提取、L3 真机、DEX 无 chunk 概念） |
+| `moon test` | ✅ 84 / 84（程序化/白盒 37 + 真实样本黄金与冒烟 12 + 畸形派生 7 + 注解/常量值/操作数语义 20 + xref 8；另有 3 个 `#skip` 用例不计入：第三方样本未提取、L3 真机、DEX 无 chunk 概念） |
 | `moon fmt --check` | ✅ |
 
-黄金差分（`fixtures/golden/golden-diff.ps1`）：工具侧 `dexdump ↔ fixtures/golden/dex/*.norm.txt` **全通**；
-解析侧 `@dex.parse ↔ 黄金` **已启用并全通**（tvshell-debug、motionshell 均 exit 0，P0 缺陷已修复）。
-API 快照：`pkg.generated.mbti`（`moon info` 由主控统一执行）。
+黄金差分：**黄金期望值内嵌于测试代码**（`fixtures_test.mbt` 黄金常量/内嵌黄金），`moon test`
+即回归。开发期曾以独立差分脚本做"工具侧 `dexdump` ↔ 黄金 ↔ 解析侧 `@dex.parse`"三方差分
+（tvshell-debug、motionshell、fx-multidex、fx-multidex2 全通过，方法与结论见 `tests/ASSETS.md` §2）。
+API 快照：`pkg.generated.mbti`（`moon info` 生成）。
 
 实现：✅ `parse` / 访问器 / `disasm` 均为真实实现；唯一保留的 TODO 是 `res0`/`data` 语义解释（见上表）。

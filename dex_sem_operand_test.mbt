@@ -1,4 +1,4 @@
-// WP-2 结构化指令操作数测试（R2 语义补全轮新增文件）。
+// 结构化指令操作数测试（语义补全批次新增文件）。
 //
 // 覆盖：InsnOperands 结构化视图（regs/literal/branch/index_kind/index）、
 // 按表解析名字的 helper（invoke→Lcls;->name(sig)ret、const-string→字符串池项、

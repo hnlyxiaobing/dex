@@ -1,7 +1,7 @@
-// WP-2 xref P1 单元/语义测试（R3 新增文件）。
+// xref P1 单元/语义测试。
 //
-// 覆盖（契约 §3 五类，仅单元/语义；黄金比对测试归 WP-4 fixtures_test.mbt，
-// 本文件不读 golden 文件、不使用 `golden dex xref` 用例名）：
+// 覆盖（五类，仅单元/语义；黄金比对测试归 fixtures_test.mbt，
+// 本文件不做黄金比对、不使用 `golden dex xref` 用例名）：
 // 1) 不变量：Σ callers == Σ callees == invoke 指令总数；Σ field_sites ==
 //    iget/iput/sget/sput 指令总数；每条 site 的 (method_ref, offset) 处指令
 //    opcode 族与 kind 一致；sites() 与各查询汇总一致。
@@ -14,12 +14,12 @@
 // 5) 不读 golden 文件。
 //
 // 程序化 fixture 仅做单元语义（合成 dex 不冒充真实格式兼容；真实样本
-// 逐行核对归 WP-4 黄金）。sem_b_* 字节构造与 sem_check* 断言复用
+// 逐行核对归 fixtures_test.mbt 黄金用例）。sem_b_* 字节构造与 sem_check* 断言复用
 // dex_sem_annotations_test.mbt 的共享辅助（黑盒测试同一命名空间）。
-// kind 标签表为测试侧镜像（契约 §4 黄金口径），不进库公开面（契约 §0 ⑨）。
+// kind 标签表为测试侧镜像（黄金口径固定标签表），不进库公开面。
 
 ///|
-/// 测试侧 kind 标签（镜像契约 §4 标签表；库内不加 label 方法）。
+/// 测试侧 kind 标签（镜像黄金口径固定标签表；库内不加 label 方法）。
 fn xref_kind_tag(k : @dex.XrefKind) -> String {
   match k {
     @dex.XrefKind::XrefCallVirtual => "call-virtual"
@@ -804,7 +804,7 @@ test "xref: 边界——payload 不产 site 与排序稳定" {
 
 ///|
 /// 盲区口径（钉死）：0xFA–0xFF（MethodHandle 体系）不在指令表，
-/// parse 即抛 InvalidInstruction(0, op)，xref 不可见（W3 延后）。
+/// parse 即抛 InvalidInstruction(0, op)，xref 不可见（延后项）。
 test "xref: 盲区——0xFA–0xFF parse 抛 InvalidInstruction（钉死）" {
   for op in [0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff] {
     let data = xref_bad_opcode_dex(op)
