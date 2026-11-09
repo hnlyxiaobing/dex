@@ -72,6 +72,14 @@ $dex = [IO.File]::ReadAllBytes('tests/fixtures/fx-multidex.classes.dex')
   产出 `classes.dex`（4264 B）以字面量内嵌测试代码。
 - `fx-multidex`：`javac --release 11` 编译 `fx.multi.*` / `fx.multi.sec.*` 两组源码后分别
   `d8 --min-api 21` 产出 `classes.dex`（2116 B）/ `classes2.dex`（1640 B）。
+- `fx-dyn`（R4，DEX 038+ 指令组）：`tests/src/FxDyn.java` 经 `javac --release 11` 编译后
+  `d8 --min-api 26 --no-desugaring --lib android.jar` 产出 `tests/fixtures/fx-dyn.classes.dex`
+  （3480 B，DEX 038），保留 lambda 的 `invoke-custom`/`invoke-polymorphic` 与
+  `method_handles_item`/`call_site_id_item` 两张 038+ 表；构建/复核脚本
+  `tests/build-dyn.ps1`（`-Update` 才覆盖 fixture，默认仅比对 SHA-256），dexdump 对照
+  `tests/work/fx-dyn.dexdump.txt`（`tests/work/` 不提交）。工具版本：javac 21.0.9 /
+  d8 8.6.2-dev / android-35。断言见 `invoke_test.mbt` / `invoke_wbtest.mbt`（表级事实、
+  句柄/调用点名字标注、038+ 指令操作数标注、IndexCallSite 结构化视图、错误路径）。
 
 ## 4. 未入库第三方样本
 
