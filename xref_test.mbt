@@ -803,21 +803,28 @@ test "xref: 边界——payload 不产 site 与排序稳定" {
 }
 
 ///|
-/// 盲区口径（钉死）：0xFA–0xFF（MethodHandle 体系）不在指令表，
-/// parse 即抛 InvalidInstruction(0, op)，xref 不可见（延后项）。
-test "xref: 盲区——0xFA–0xFF parse 抛 InvalidInstruction（钉死）" {
+/// R4 口径更新：0xFA–0xFF（MethodHandle 体系）已纳入指令表，parse 不再以
+/// `InvalidInstruction` 拒绝它们（旧「盲区钉死」用例随 R4 实现翻转）。
+/// 本用例守住「不再误报 InvalidInstruction(op)」；0xE3–0xF9 仍为未定义。
+test "xref: 0xFA–0xFF 已纳入指令表（不再报 InvalidInstruction）" {
   for op in [0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff] {
     let data = xref_bad_opcode_dex(op)
-    let mut got = false
-    ignore(@dex.parse(data)) catch {
-      @dex.DexError::InvalidInstruction(off, code) => {
-        sem_check_eq(off, 0, msg="畸形指令在 code unit 0")
-        sem_check_eq(code, op, msg="InvalidInstruction 携带原 opcode")
-        got = true
-      }
+    let mut invalid_insn = false
+    try ignore(@dex.parse(data)) catch {
+      @dex.DexError::InvalidInstruction(_, code) =>
+        if code == op {
+          invalid_insn = true
+        }
+      _ => ()
+    } noraise {
       _ => ()
     }
-    sem_check(got, msg="opcode " + op.to_string() + " 应被 parse 拒绝")
+    sem_check(
+      !invalid_insn,
+      msg="opcode " +
+        op.to_string() +
+        " 已纳入表，不应报 InvalidInstruction",
+    )
   }
 }
 

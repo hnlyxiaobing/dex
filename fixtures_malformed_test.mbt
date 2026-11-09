@@ -173,9 +173,10 @@ test "dex malformed: map_off 越界报 UnexpectedEof" {
 ///|
 test "dex malformed: 未知指令 opcode 报 InvalidInstruction 而非 panic" {
   let src = fixture_tvshell_dex()
-  // code_item 首条指令位于 code_off(1384) + 16；把它改成 0xFF（Dalvik 未定义 opcode）
+  // code_item 首条指令位于 code_off(1384) + 16；把它改成 0xE3（Dalvik 未定义
+  // opcode；0xFA–0xFF 已在 R4 纳入指令表，故改用 0xE3 保持「未定义」语义）
   let mut detail = ""
-  try ignore(@dex.parse(fx_mut_fixed(src, 1384 + 16, b'\xff'))) catch {
+  try ignore(@dex.parse(fx_mut_fixed(src, 1384 + 16, b'\xe3'))) catch {
     @dex.DexError::InvalidInstruction(_, _) => detail = "InvalidInstruction"
     _ => detail = "other"
   } noraise {

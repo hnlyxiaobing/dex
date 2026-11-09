@@ -13,6 +13,9 @@ pub(all) enum IndexKind {
   IndexType
   IndexField
   IndexMethod
+  IndexCallSite
+  IndexMethodHandle
+  IndexProto
 }
 
 ///|
@@ -39,6 +42,9 @@ fn index_kind_of(k : RefKind) -> IndexKind {
     KType => IndexType
     KField => IndexField
     KMethod => IndexMethod
+    KCallSite => IndexCallSite
+    KMethodHandle => IndexMethodHandle
+    KProto => IndexProto
   }
 }
 
@@ -243,7 +249,7 @@ fn decode_operands_struct(
         index_kind: index_kind_of(kind),
         index: read_u32(raw, 2),
       }
-    F35c => {
+    F35c | F45cc => {
       let count = b
       let g = a
       let c = u2 & 0xf
@@ -263,7 +269,7 @@ fn decode_operands_struct(
         index: u1,
       }
     }
-    F3rc => {
+    F3rc | F4rcc => {
       let regs : Array[Int32] = []
       if aa > 0 {
         for i in 0..<aa {
@@ -402,6 +408,9 @@ pub fn resolve_ref_name(
     IndexType => type_ref_name(dex, index)
     IndexField => field_ref_name(dex, index)
     IndexMethod => method_ref_name(dex, index)
+    IndexCallSite => call_site_name(dex, index)
+    IndexMethodHandle => method_handle_name(dex, index)
+    IndexProto => proto_name(dex, index)
   }
 }
 

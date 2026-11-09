@@ -38,6 +38,10 @@ pub(all) enum EncodedValue {
   ValueField(String)
   ValueMethod(String)
   ValueEnum(String)
+  /// DEX 038+：VALUE_METHOD_TYPE（proto 引用，`(params)ret` 文本）
+  ValueMethodType(String)
+  /// DEX 038+：VALUE_METHOD_HANDLE（method_handles 表引用，`<kind> <target>` 文本）
+  ValueMethodHandle(String)
   ValueArray(Array[EncodedValue])
   ValueAnnotation(EncodedAnnotation)
   ValueNull
@@ -300,6 +304,30 @@ fn decode_value(
       ValueDouble(read_double_bits(data, pos + 1, size).reinterpret_as_double()),
       pos + 1 + size,
     )
+  } else if vtype == 0x15 {
+    // VALUE_METHOD_TYPE（DEX 038+，仅 call_site 上下文合法）：proto 引用
+    if size > 4 {
+      raise DexError::BadTableOffset(TableKind::ClassDef, pos)
+    }
+    need_bytes(data, pos + 1, size)
+    let idx = check_index(
+      TableKind::ProtoId,
+      read_sized_le(data, pos + 1, size),
+      ctx.protos.length(),
+    )
+    (ValueMethodType(fmt_proto_sig(ctx.protos[idx])), pos + 1 + size)
+  } else if vtype == 0x16 {
+    // VALUE_METHOD_HANDLE（DEX 038+）：method_handles 表引用
+    if size > 4 {
+      raise DexError::BadTableOffset(TableKind::ClassDef, pos)
+    }
+    need_bytes(data, pos + 1, size)
+    let idx = check_index(
+      TableKind::MethodHandle,
+      read_sized_le(data, pos + 1, size),
+      ctx.handles.length(),
+    )
+    (ValueMethodHandle(fmt_method_handle_ref(ctx, idx)), pos + 1 + size)
   } else if vtype == 0x17 {
     // VALUE_STRING：字符串池索引（1..4 字节零扩展）
     if size > 4 {
@@ -381,7 +409,7 @@ fn decode_value(
     // VALUE_BOOLEAN：值 = value_arg & 1，无 payload
     (ValueBoolean(((fmt >> 5) & 1) == 1), pos + 1)
   } else {
-    // 0x01/0x05/0x07-0x0f/0x12-0x16 为保留码
+    // 0x01/0x05/0x07-0x0f/0x12-0x14 为保留码（0x15/0x16 已在上面单独处理）
     raise DexError::BadTableOffset(TableKind::ClassDef, pos)
   }
 }

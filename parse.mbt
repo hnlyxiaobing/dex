@@ -360,6 +360,8 @@ priv struct Ctx {
   protos : Array[ProtoId]
   fields : Array[FieldDef]
   methods : Array[MethodDef]
+  handles : Array[MethodHandleItem]
+  call_sites : Array[CallSiteItem]
 }
 
 ///|
@@ -908,7 +910,32 @@ fn read_ctx(data : Bytes) -> Ctx raise DexError {
       code: None,
     })
   }
-  Ctx::{ strings, types, protos, fields, methods, }
+  // DEX 038+ 指令组支撑表（map_list type 0x0007 / 0x0008）：
+  // 先解析 method_handles（call_site 的 encoded_value 引用它），再解析
+  // call_site_ids；两阶段构造满足 Ctx 的不可变字段。
+  let map_off = read_u32(data, 52)
+  // map_off 越界先行 fail-closed（与 parse_dex 的 map_list 校验同口径）：
+  // 038+ 支撑表在 read_ctx 内解析，必须在读 map 前拦住坏偏移。
+  if map_off != 0 && (map_off < 0x70 || map_off + 4 > file_size) {
+    raise DexError::UnexpectedEof(map_off)
+  }
+  let handles = parse_method_handles(
+    data,
+    map_off,
+    fields.length(),
+    methods.length(),
+  )
+  let ctx1 = Ctx::{
+    strings,
+    types,
+    protos,
+    fields,
+    methods,
+    handles,
+    call_sites: [],
+  }
+  let call_sites = parse_call_sites(data, map_off, ctx1)
+  Ctx::{ strings, types, protos, fields, methods, handles, call_sites, }
 }
 
 ///|
@@ -1010,6 +1037,8 @@ fn parse_dex(data : Bytes) -> DexFile raise DexError {
     fields: ctx.fields,
     methods: ctx.methods,
     classes,
+    handles: ctx.handles,
+    call_sites: ctx.call_sites,
     map_list,
   }
 }

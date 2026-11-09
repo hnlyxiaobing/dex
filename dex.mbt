@@ -30,6 +30,7 @@ pub(all) enum TableKind {
   ClassDef
   CallSiteId
   MethodHandle
+  MapList
 }
 
 ///|
@@ -126,6 +127,10 @@ pub(all) struct DexFile {
   fields : Array[FieldDef]
   methods : Array[MethodDef]
   classes : Array[ClassDef]
+  /// DEX 038+：method_handles_item 表（无该表时为空）。
+  handles : Array[MethodHandleItem]
+  /// DEX 038+：call_site_id_item 表（无该表时为空）。
+  call_sites : Array[CallSiteItem]
   map_list : Bytes
 }
 

@@ -93,16 +93,26 @@ test "opcode table completeness" {
   for op in 0..<256 {
     if opcode_info(op) is Some(_) {
       defined = defined + 1
-      check(op <= 0xe2, msg="no opcode beyond 0xE2")
+      check(
+        op <= 0xe2 || (op >= 0xfa && op <= 0xff),
+        msg="defined opcode outside 0x00-0xE2 / 0xFA-0xFF",
+      )
     }
   }
-  check_eq(defined, 218, msg="AOSP defined opcodes 0x00-0xE2")
+  check_eq(defined, 224, msg="218 (0x00-0xE2) + 6 (0xFA-0xFF)")
   check(opcode_info(0x3e) is None, msg="unused 0x3E")
   check(opcode_info(0x73) is None, msg="unused 0x73")
-  check(opcode_info(0xe2) is Some(_), msg="last defined opcode")
-  check(opcode_info(0xfa) is None, msg="0xFA out of declared scope (W3)")
+  check(opcode_info(0xe2) is Some(_), msg="last base opcode")
+  check(opcode_info(0xfa) is Some(_), msg="0xFA invoke-polymorphic")
+  check(opcode_info(0xfc) is Some(_), msg="0xFC invoke-custom")
+  check(opcode_info(0xfe) is Some(_), msg="0xFE const-method-handle")
+  check(opcode_info(0xff) is Some(_), msg="0xFF const-method-type")
+  check(opcode_info(0xe3) is None, msg="0xE3 undefined")
+  check(opcode_info(0xf9) is None, msg="0xF9 undefined")
   check_eq(fmt_width(F51l), 5)
   check_eq(fmt_width(F35c), 3)
+  check_eq(fmt_width(F45cc), 4)
+  check_eq(fmt_width(F4rcc), 4)
   check_eq(fmt_width(F10x), 1)
 }
 
@@ -115,6 +125,8 @@ test "decode_insns basics" {
     protos: [],
     fields: [],
     methods: [],
+    handles: [],
+    call_sites: [],
   }
   let insns = decode_insns(ctx, 0x70, 0, 2, b"\x12\x10\x0e\x00")
   check_eq(insns.length(), 2)
@@ -146,6 +158,8 @@ test "decode_insns invoke with refs" {
         code: None,
       },
     ],
+    handles: [],
+    call_sites: [],
   }
   let insns = decode_insns(ctx, 0x70, 0, 3, b"\x6e\x20\x00\x00\x10\x00")
   check_eq(insns.length(), 1)
@@ -163,6 +177,8 @@ test "decode_insns payload" {
     protos: [],
     fields: [],
     methods: [],
+    handles: [],
+    call_sites: [],
   }
   let data = b"\x00\x01\x02\x00\x00\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00"
   let insns = decode_insns(ctx, 0x70, 0, 8, data)
@@ -182,6 +198,8 @@ test "decode_insns invalid opcode" {
     protos: [],
     fields: [],
     methods: [],
+    handles: [],
+    call_sites: [],
   }
   let mut got = false
   ignore(decode_insns(ctx, 0x70, 0, 1, b"\x3e\x00")) catch {

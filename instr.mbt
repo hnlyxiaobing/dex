@@ -1,8 +1,9 @@
 ///|
 /// Dalvik 指令解码：opcode → (助记符, 指令格式, 引用类型) 表与操作数格式化。
-/// 范围：AOSP dalvik-bytecode 中 0x00–0xE2 的 218 条已定义指令；
-/// 0x3E–0x43 / 0x73 / 0x79 / 0x7A 为未定义，0xE3–0xFF 超出本库范围
-/// （含 DEX 038+ 的 0xFA–0xFE，本库指令表未定义、属延后项），解码到它们抛 `InvalidInstruction`。
+/// 范围：AOSP dalvik-bytecode 中 0x00–0xE2 的 218 条已定义指令 + DEX 038+
+/// 的 0xFA–0xFF（invoke-polymorphic{,/range} / invoke-custom{,/range} /
+/// const-method-handle / const-method-type）；0x3E–0x43 / 0x73 / 0x79 / 0x7A
+/// 为未定义，0xE3–0xF9 超出本库范围，解码到它们抛 `InvalidInstruction`。
 
 ///|
 /// 指令格式（决定宽度与操作数布局），对应 AOSP 十种基础格式。
@@ -30,6 +31,8 @@ priv enum InstrFormat {
   F31c
   F35c
   F3rc
+  F45cc
+  F4rcc
   F51l
 }
 
@@ -41,6 +44,9 @@ priv enum RefKind {
   KType
   KField
   KMethod
+  KCallSite
+  KMethodHandle
+  KProto
 }
 
 ///|
@@ -70,6 +76,8 @@ fn fmt_width(f : InstrFormat) -> Int32 {
     F31c => 3
     F35c => 3
     F3rc => 3
+    F45cc => 4
+    F4rcc => 4
     F51l => 5
   }
 }
@@ -296,6 +304,12 @@ fn opcode_info(op : Int32) -> (String, InstrFormat, RefKind)? {
     0xe0 => Some(("shl-int/lit8", F22b, KNone))
     0xe1 => Some(("shr-int/lit8", F22b, KNone))
     0xe2 => Some(("ushr-int/lit8", F22b, KNone))
+    0xfa => Some(("invoke-polymorphic", F45cc, KMethod))
+    0xfb => Some(("invoke-polymorphic/range", F4rcc, KMethod))
+    0xfc => Some(("invoke-custom", F35c, KCallSite))
+    0xfd => Some(("invoke-custom/range", F3rc, KCallSite))
+    0xfe => Some(("const-method-handle", F21c, KMethodHandle))
+    0xff => Some(("const-method-type", F21c, KProto))
     _ => None
   }
 }
@@ -368,7 +382,7 @@ fn fmt_method_ref(ctx : Ctx, idx : Int32) -> String raise DexError {
 }
 
 ///|
-/// 按引用类别格式化常量池引用。
+/// 按引用类别格式化常量池引用（含 DEX 038+ 的 call_site / method_handle / proto）。
 fn fmt_ref(ctx : Ctx, kind : RefKind, idx : Int32) -> String raise DexError {
   match kind {
     KNone => ""
@@ -376,6 +390,19 @@ fn fmt_ref(ctx : Ctx, kind : RefKind, idx : Int32) -> String raise DexError {
     KType => fmt_type_ref(ctx, idx)
     KField => fmt_field_ref(ctx, idx)
     KMethod => fmt_method_ref(ctx, idx)
+    KCallSite => fmt_call_site_ref(ctx, idx)
+    KMethodHandle =>
+      "method_handle@" +
+      idx.to_string() +
+      "{" +
+      fmt_method_handle_ref(ctx, idx) +
+      "}"
+    KProto =>
+      if idx < 0 || idx >= ctx.protos.length() {
+        raise DexError::InvalidIndex(TableKind::ProtoId, idx)
+      } else {
+        fmt_proto_sig(ctx.protos[idx])
+      }
   }
 }
 
@@ -498,6 +525,51 @@ fn decode_operands(
         }
       }
       [fmt_reg_list(regs, range=true), fmt_ref(ctx, kind, u1)]
+    }
+    F45cc => {
+      // 45cc：unit0 = op|G|A(count)，unit1 = method@，unit2 = regs C,D,E,F，
+      // unit3 = proto@；寄存器列表取前 count 个（AOSP 45cc 布局）。
+      let count = b
+      let g = a
+      let c = u2 & 0xf
+      let d = (u2 >> 4) & 0xf
+      let e = (u2 >> 8) & 0xf
+      let f = (u2 >> 12) & 0xf
+      let proto_idx = if foff + 8 <= data.length() {
+        read_u16(data, foff + 6)
+      } else {
+        0
+      }
+      let regs : Array[Int32] = []
+      let all = [c, d, e, f, g]
+      for i in 0..<count {
+        regs.push(all[i])
+      }
+      [
+        fmt_reg_list(regs),
+        fmt_ref(ctx, KMethod, u1),
+        fmt_ref(ctx, KProto, proto_idx),
+      ]
+    }
+    F4rcc => {
+      // 4rcc：unit0 = op|AA(count)，unit1 = method@，unit2 = first reg，
+      // unit3 = proto@。
+      let proto_idx = if foff + 8 <= data.length() {
+        read_u16(data, foff + 6)
+      } else {
+        0
+      }
+      let regs : Array[Int32] = []
+      if aa > 0 {
+        for i in 0..<aa {
+          regs.push(u2 + i)
+        }
+      }
+      [
+        fmt_reg_list(regs, range=true),
+        fmt_ref(ctx, KMethod, u1),
+        fmt_ref(ctx, KProto, proto_idx),
+      ]
     }
     F51l => {
       let w1 = read_u16(data, foff + 2)

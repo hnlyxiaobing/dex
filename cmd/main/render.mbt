@@ -136,6 +136,8 @@ fn enc_text(v : @dex.EncodedValue) -> String {
     ValueField(s) => s
     ValueMethod(s) => s
     ValueEnum(s) => s
+    ValueMethodType(s) => s
+    ValueMethodHandle(s) => s
     ValueArray(items) => {
       let mut s = "["
       let mut first = true

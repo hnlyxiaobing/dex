@@ -12,6 +12,12 @@ pub fn annotation_set(Bytes, Int32) -> AnnotationSet raise DexError
 
 pub fn build_xref(DexFile) -> XrefIndex raise DexError
 
+pub fn call_site_name(DexFile, Int32) -> String raise DexError
+
+pub fn call_site_ref_name(Bytes, Int32) -> String raise DexError
+
+pub fn call_sites(Bytes) -> Array[CallSiteItem] raise DexError
+
 pub fn class_annotations(Bytes, Int32) -> AnnotationsDirectory? raise DexError
 
 pub fn disasm(DexFile, Int32) -> String raise DexError
@@ -24,11 +30,19 @@ pub fn instruction_operands(Instruction) -> InsnOperands raise DexError
 
 pub fn instruction_ref_name(DexFile, Instruction) -> String? raise DexError
 
+pub fn method_handle_name(DexFile, Int32) -> String raise DexError
+
+pub fn method_handle_ref_name(Bytes, Int32) -> String raise DexError
+
+pub fn method_handles(Bytes) -> Array[MethodHandleItem] raise DexError
+
 pub fn method_ref_name(DexFile, Int32) -> String raise DexError
 
 pub fn method_ref_of(DexFile, MethodDef) -> Int32?
 
 pub fn parse(Bytes) -> DexFile raise DexError
+
+pub fn proto_name(DexFile, Int32) -> String raise DexError
 
 pub fn resolve_ref_name(DexFile, IndexKind, Int32) -> String raise DexError
 
@@ -81,6 +95,11 @@ pub(all) struct AnnotationsDirectory {
   parameter_annotations : Array[ParameterAnnotations]
 }
 
+pub(all) struct CallSiteItem {
+  call_site_off : Int32
+  values : Array[EncodedValue]
+}
+
 pub(all) struct ClassDef {
   class_index : Int32
   type_descriptor : String
@@ -119,6 +138,8 @@ pub(all) struct DexFile {
   fields : Array[FieldDef]
   methods : Array[MethodDef]
   classes : Array[ClassDef]
+  handles : Array[MethodHandleItem]
+  call_sites : Array[CallSiteItem]
   map_list : Bytes
 }
 pub fn DexFile::classes(Self) -> Array[ClassDef]
@@ -154,6 +175,8 @@ pub(all) enum EncodedValue {
   ValueField(String)
   ValueMethod(String)
   ValueEnum(String)
+  ValueMethodType(String)
+  ValueMethodHandle(String)
   ValueArray(Array[EncodedValue])
   ValueAnnotation(EncodedAnnotation)
   ValueNull
@@ -178,6 +201,9 @@ pub(all) enum IndexKind {
   IndexType
   IndexField
   IndexMethod
+  IndexCallSite
+  IndexMethodHandle
+  IndexProto
 }
 
 pub(all) struct InsnOperands {
@@ -210,6 +236,25 @@ pub(all) struct MethodDef {
   code : CodeItem?
 }
 
+pub(all) struct MethodHandleItem {
+  handle_type : MethodHandleKind
+  field_or_method_index : Int32
+}
+pub fn MethodHandleItem::is_field_ref(Self) -> Bool
+pub fn MethodHandleItem::is_method_ref(Self) -> Bool
+
+pub(all) enum MethodHandleKind {
+  StaticPut
+  StaticGet
+  InstancePut
+  InstanceGet
+  InvokeStatic
+  InvokeInstance
+  InvokeConstructor
+  InvokeDirect
+  InvokeInterface
+}
+
 pub(all) struct ParameterAnnotations {
   method_index : Int32
   parameters : Array[AnnotationSet]
@@ -231,6 +276,7 @@ pub(all) enum TableKind {
   ClassDef
   CallSiteId
   MethodHandle
+  MapList
 }
 pub fn TableKind::to_repr(Self) -> @debug.Repr
 
