@@ -2,7 +2,7 @@
 // Prefer high-level behaviors over implementation details.
 // Run `moon test` to execute and `moon test --update` to refresh snapshots.
 //
-// 本文件以编程方式构造合法 / 畸形 DEX 二进制样本（工作区无真实 APK 资产），
+// 本文件以编程方式构造合法 / 畸形 DEX 二进制样本（本仓库不含真实 APK 资产），
 // 覆盖六表、class_def、code_item、方法名提取与 magic / checksum 错误路径。
 
 ///|
