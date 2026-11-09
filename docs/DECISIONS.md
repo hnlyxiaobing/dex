@@ -75,13 +75,13 @@ build-tools）只作开发期差分基准，不链接、不入库；`classfile@0
 **真实** DEX 抛 `DexError::InvalidIndex(MethodId, 49)`（tvshell-debug 样本，`method_ids_size`
 只有 43）。
 
-**缺陷与根因**：`parse.mbt::parse_class_data` 把 `class_data_item` 的 `method_idx_diff` 在
+**缺陷与根因**：`../parse.mbt::parse_class_data` 把 `class_data_item` 的 `method_idx_diff` 在
 `direct_methods` 与 `virtual_methods` 两个分段之间**连续累加**，而 AOSP libdex / `dexdump`
 在每个分段各自从 0 累加（`static_fields` / `instance_fields` 同理）。实测（tvshell-debug）：
 dexdump 报方法索引 24,25,26 / 27,28 / 29,33,34,35；连续累加得 24,49,50 / 27,55 / 29,62,63,64 ——
 越界即抛 `InvalidIndex(MethodId, 49)`。
 
-**决策 / 修复**：进入 instance/virtual 分段时索引**复位**（`parse.mbt::parse_class_data`，
+**决策 / 修复**：进入 instance/virtual 分段时索引**复位**（`../parse.mbt::parse_class_data`，
 与 AOSP libdex 行为一致）；修复后真实样本解析侧黄金差分全通（tvshell-debug、motionshell 与后续
 fx-multidex 多 dex 样本），并把该缺陷从"已知缺陷钉死用例"改为真实黄金差分常驻回归。
 
@@ -92,9 +92,9 @@ fx-multidex 多 dex 样本），并把该缺陷从"已知缺陷钉死用例"改�
 2. **方法论教训**：程序化 fixture 与实现会**互相印证同一错误假设**（"连续累加"的实现配"连续累加"
    的期望），真实工具产出的黄金差分是唯一可靠对照。这与后续在容器层发现的签名块布局缺陷同型。
 
-**后果**：黄金期望值现内嵌于 `fixtures_test.mbt`（`GOLDEN-BEGIN/END` 标记的黄金常量），`moon test`
+**后果**：黄金期望值现内嵌于 `../fixtures_test.mbt`（`GOLDEN-BEGIN/END` 标记的黄金常量），`moon test`
 即回归；任何人改动 `class_data` 解析都必须过真实样本黄金差分。开发期"工具侧↔黄金↔解析侧"三方
-差分方法保留描述见 `tests/ASSETS.md`。
+差分方法保留描述见 `../tests/ASSETS.md`。
 
 ## D4. 错误处理与容错口径：严格校验 + 显式错误，禁止 panic
 
@@ -108,7 +108,7 @@ DEX 会让贪婪解析器崩溃；jadx 用 `--show-bad-code` + 半损坏 APK 自
 `TableKind` / 索引 / 偏移便于定位；`Option` 表达"正常无结果"（如 abstract/native 方法
 `code == None`），`raise` 表达"失败"，二者不混用；畸形输入（截断、magic/checksum 污染、表偏移
 污染、未知 opcode）一律报 `DexError` 而非 panic，且有从真实样本派生的畸形用例（
-`fixtures_malformed_test.mbt`）钉死该行为。
+`../fixtures_malformed_test.mbt`）钉死该行为。
 
 **理由**：错误里带 `TableKind`/偏移才能在黄金差分中快速定位差异来源；把"解析不了"表达为错误值
 而不是崩溃，上层才可能做"跳过坏结构、继续审计其余部分"的容错策略（DEX 是扁平表结构，没有
@@ -129,7 +129,7 @@ smali 输出，最后以**加法性新增**落地语义层（注解目录四类 
 **理由**：按依赖方真实需要排先后，避免一次性铺开；语义层做成加法性新增（新类型 + 新函数，
 入口自含：第一参数为原始 DEX `Bytes`），既有调用方零迁移。
 
-**后果**：公开签名演进全程零破坏（`pkg.generated.mbti` 快照 106 行插入 / 0 行删除，既有
+**后果**：公开签名演进全程零破坏（`../pkg.generated.mbti` 快照 106 行插入 / 0 行删除，既有
 `parse` / `disasm` / 访问器 / `Instruction` / `DexError` 等零改动）；`Instruction` 冻结结构
 未动，结构化操作数以新增 `InsnOperands` 视图实现（从 `Instruction::raw` 重解码），文本 `disasm`
 输出行为不变。
@@ -141,14 +141,14 @@ smali 输出，最后以**加法性新增**落地语义层（注解目录四类 
 公开 API 全部配 `///` 文档注释（参数所有权、错误、线程约束、非目标）。
 
 **决策 / 现状**：所有函数体均已补齐为**真实实现**（无 `declare` 存根、无 `0068` 告警）；
-`moon check --deny-warn` 0 error / 0 warning。`pkg.generated.mbti` 为 `moon info` 生成的 API
+`moon check --deny-warn` 0 error / 0 warning。`../pkg.generated.mbti` 为 `moon info` 生成的 API
 快照，公开签名变化必须先过快照 diff 评审。
 
 **理由**：规格先行使 API 评审与并行实现解耦；实现完成后保留文档注释与快照机制，作为公开面的
 持续契约。
 
 **后果**：仓库当前状态即"声明 + 实现合一"，新贡献者看到的每个公开函数都有真实函数体与文档注释；
-破坏性 API 变更必须升主版本并更新 `pkg.generated.mbti`。
+破坏性 API 变更必须升主版本并更新 `../pkg.generated.mbti`。
 
 ## 外部规范来源（公开文档，非仓库文件）
 

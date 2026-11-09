@@ -82,13 +82,13 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 
 | 层次 | 内容 | 实跑状态（2026-11-07 起） |
 |---|---|---|
-| 黑盒（程序化 fixture，`dex_test.mbt`） | 六表、class_def、code_item、方法名、magic/checksum 错误路径 | ✅ 26 例 |
-| 白盒（`dex_wbtest.mbt`） | 六表索引边界、`code_item` 偏移、try/catch、`debug_info`、opcode 表边界 | ✅ 11 例 |
-| 黑盒（真实样本，`fixtures_test.mbt`） | 内嵌真实 `classes.dex`（tvshell-debug 4368 B、motionshell 3148 B、fx-multidex 2116 B + 1640 B）；**内嵌黄金期望值**（`fixtures_test.mbt` 黄金常量，`dexdump` 规范化口径）与解析输出逐字段 diff + 冒烟 | ✅ 12 例（工具侧 + **解析侧全通**，P0 缺陷已修复，§13） |
-| 畸形派生（`fixtures_malformed_test.mbt`） | 从真实 dex 派生：截断 / magic 污染 / 错误 checksum / 表偏移污染 / `map_off` 越界 / 未知 opcode / 多 dex 截断与污染（重算 adler32 后直达结构错误）；断言报 `DexError` 而非 panic | ✅ 7 例 |
-| 注解/常量值语义（`dex_sem_annotations_test.mbt` 9 + `dex_sem_consts_test.mbt` 5） | 四类注解目录、encoded_value 全 16 类型（含 VALUE_FIELD/METHOD/ENUM/NULL/窄宽/左对齐浮点）、嵌套注解、static_values 前缀语义、错误路径；真实样本 = javac 21 + d8 自建 AnnoSample.dex（4264 B，SHA-256 `16dbf2d6…52d0d`，见 `tests/ASSETS.md`）+ tvshell（VALUE_METHOD/VALUE_NULL/加密字符串入口），`dexdump -d -a` 逐值核对 | ✅ 14 例 |
-| 结构化操作数（`dex_sem_operand_test.mbt`） | 十种操作数格式的 regs/literal/branch/index 视图、payload 空视图、名字解析 helper、真实样本 main/Kind.\<clinit\> 与 dexdump `// method@00xx` 等对照 | ✅ 6 例 |
-| xref 索引（`xref_test.mbt`） | 计数恒等式与 kind/opcode 族一致、invoke 五族与字段四类分类、abstract/native/外部方法口径、越界 `InvalidIndex`、payload 不产 site、排序稳定、`method_ref_of` 反查 | ✅ 8 例 |
+| 黑盒（程序化 fixture，`../dex_test.mbt`） | 六表、class_def、code_item、方法名、magic/checksum 错误路径 | ✅ 26 例 |
+| 白盒（`../dex_wbtest.mbt`） | 六表索引边界、`code_item` 偏移、try/catch、`debug_info`、opcode 表边界 | ✅ 11 例 |
+| 黑盒（真实样本，`../fixtures_test.mbt`） | 内嵌真实 `classes.dex`（tvshell-debug 4368 B、motionshell 3148 B、fx-multidex 2116 B + 1640 B）；**内嵌黄金期望值**（`../fixtures_test.mbt` 黄金常量，`dexdump` 规范化口径）与解析输出逐字段 diff + 冒烟 | ✅ 12 例（工具侧 + **解析侧全通**，P0 缺陷已修复，§13） |
+| 畸形派生（`../fixtures_malformed_test.mbt`） | 从真实 dex 派生：截断 / magic 污染 / 错误 checksum / 表偏移污染 / `map_off` 越界 / 未知 opcode / 多 dex 截断与污染（重算 adler32 后直达结构错误）；断言报 `DexError` 而非 panic | ✅ 7 例 |
+| 注解/常量值语义（`../dex_sem_annotations_test.mbt` 9 + `../dex_sem_consts_test.mbt` 5） | 四类注解目录、encoded_value 全 16 类型（含 VALUE_FIELD/METHOD/ENUM/NULL/窄宽/左对齐浮点）、嵌套注解、static_values 前缀语义、错误路径；真实样本 = javac 21 + d8 自建 AnnoSample.dex（4264 B，SHA-256 `16dbf2d6…52d0d`，见 `../tests/ASSETS.md`）+ tvshell（VALUE_METHOD/VALUE_NULL/加密字符串入口），`dexdump -d -a` 逐值核对 | ✅ 14 例 |
+| 结构化操作数（`../dex_sem_operand_test.mbt`） | 十种操作数格式的 regs/literal/branch/index 视图、payload 空视图、名字解析 helper、真实样本 main/Kind.\<clinit\> 与 dexdump `// method@00xx` 等对照 | ✅ 6 例 |
+| xref 索引（`../xref_test.mbt`） | 计数恒等式与 kind/opcode 族一致、invoke 五族与字段四类分类、abstract/native/外部方法口径、越界 `InvalidIndex`、payload 不产 site、排序稳定、`method_ref_of` 反查 | ✅ 8 例 |
 | 门禁 | `moon fmt --check` / `moon check --deny-warn` / `moon build` / `moon test` | ✅ 全绿（84/84） |
 
 skip 机制：MoonBit 原生 `#skip` 属性（默认不计入 `Total tests`；`moon test --include-skipped` 才执行）。
@@ -104,31 +104,31 @@ skip 机制：MoonBit 原生 `#skip` 属性（默认不计入 `Total tests`；`m
 ## 12. 未解决问题 / 待验证假设
 
 - DEX v041 / 厂商加固 DEX 的实际分布未验证（候选真实 APK 许可不明、未入库，仅开发期差分复核，
-  见 `tests/ASSETS.md`）。
+  见 `../tests/ASSETS.md`）。
 - `aapt2`/`dexdump` 官方 fuzz / 差分测试套件是否存在未证实；已以自建黄金差分替代（黄金期望值
-  内嵌测试代码，`moon test` 即回归，见 `tests/ASSETS.md` §2）。
+  内嵌测试代码，`moon test` 即回归，见 `../tests/ASSETS.md` §2）。
 - ARM64 指令边界判断若未来给 `ptrace_lite` 用，需要额外反汇编支持。
 
 ## 13. 当前状态与 TODO
 
-`dex.mbt` / `parse.mbt` / `instr.mbt` / `disasm.mbt` / `xref.mbt` 已全部实现（**无 `declare`、无 `0068`**），
+`../dex.mbt` / `../parse.mbt` / `../instr.mbt` / `../disasm.mbt` / `../xref.mbt` 已全部实现（**无 `declare`、无 `0068`**），
 公开 API 有 `///` 文档注释；字段名避开保留字 `method`（改用 `method_ref`）。
 
-**真实样本与黄金差分（2026-11-07）**：L1 真实样本（`tests/fixtures/*.classes.dex`）+ 黄金
-期望值内嵌（`fixtures_test.mbt` 黄金常量）+ 畸形派生用例 + 三方差分（开发期脚本驱动
-"工具侧 ↔ 黄金 ↔ 解析侧"，方法与结论见 `tests/ASSETS.md` §2；黄金值已内嵌，`moon test` 即回归）。
+**真实样本与黄金差分（2026-11-07）**：L1 真实样本（`../tests/fixtures/*.classes.dex`）+ 黄金
+期望值内嵌（`../fixtures_test.mbt` 黄金常量）+ 畸形派生用例 + 三方差分（开发期脚本驱动
+"工具侧 ↔ 黄金 ↔ 解析侧"，方法与结论见 `../tests/ASSETS.md` §2；黄金值已内嵌，`moon test` 即回归）。
 
 **⚠ P0 缺陷（黄金差分首跑发现，2026-11-07 已修复）**：`parse_class_data` 曾把 `method_idx_diff`
 在 direct/virtual 两段**连续累加**，而 AOSP libdex/dexdump 在每段各自从 0 累加（`static_fields`/
 `instance_fields` 同理）。实测（tvshell-debug，`method_ids_size=43`）：dexdump 报 24,25,26 / 27,28 /
 29,33,34,35；连续累加得 24,49,50 / 27,55 / 29,62,63,64 —— 越界抛 `InvalidIndex(MethodId, 49)`。
-**修复**：进入 instance/virtual 分段时索引复位（`parse.mbt::parse_class_data`）；修复后真实样本
+**修复**：进入 instance/virtual 分段时索引复位（`../parse.mbt::parse_class_data`）；修复后真实样本
 解析侧差分启用并全通 exit 0。防回归记录见 `DECISIONS.md` D3。
 
 **语义补全（2026-11-07）**：新增注解语义（annotation_directory_item 四类 /
 annotation_set_item / annotation_item / encoded_annotation / encoded_value 全 16 类型，
-`semval.mbt` + `annot.mbt`）、静态初值/encoded_array（加密字符串入口）、指令结构化操作数
-视图与名字解析 helper（`operand.mbt`）。**全部加法性**（mbti 快照 106 行插入 / 0 删除，
+`../semval.mbt` + `../annot.mbt`）、静态初值/encoded_array（加密字符串入口）、指令结构化操作数
+视图与名字解析 helper（`../operand.mbt`）。**全部加法性**（mbti 快照 106 行插入 / 0 删除，
 冻结面零改动；`DexError` 构造集合未扩）。内部重构：`parse_dex` 的头部校验与五表读取
 以纯代码搬移抽出 `validate_header` / `read_ctx` 供新入口共享（行为等价，基线用例 + 黄金差分全保）。
 编码布局实证钉死：format=(arg<<5)|type、type 码表（byte=0x00…boolean=0x1f）、
@@ -136,10 +136,10 @@ annotation_set_item / annotation_item / encoded_annotation / encoded_value 全 1
 AnnotationDefault.value 实证为 **VALUE_ANNOTATION 嵌套注解**（非数组）；
 tvshell 实证 VALUE_METHOD（EnclosingMethod）与 VALUE_NULL（InnerClass.name）。
 
-**xref 索引（2026-11-08）**：新增 `xref.mbt`（`build_xref` / `XrefIndex` / `XrefSite` /
+**xref 索引（2026-11-08）**：新增 `../xref.mbt`（`build_xref` / `XrefIndex` / `XrefSite` /
 `XrefKind`，加法性），把每条 `invoke-*`/`iget-*`/`iput-*`/`sget-*`/`sput-*` 指令解码为一个
-访问点；与 `dexdump -d` 指令行抽取口径三方一致（见 `tests/ASSETS.md` §2）。
+访问点；与 `dexdump -d` 指令行抽取口径三方一致（见 `../tests/ASSETS.md` §2）。
 
 ## References
 
-`DECISIONS.md`（设计决策：模块边界 / 选型 / P0 缺陷记录 / 错误模型 / 开发顺序）· `tests/ASSETS.md`（样本来源与黄金口径）· `https://source.android.com/docs/core/dalvik/dalvik-bytecode` · `https://github.com/JesusFreke/smali`
+`DECISIONS.md`（设计决策：模块边界 / 选型 / P0 缺陷记录 / 错误模型 / 开发顺序）· `../tests/ASSETS.md`（样本来源与黄金口径）· `https://source.android.com/docs/core/dalvik/dalvik-bytecode` · `https://github.com/JesusFreke/smali`

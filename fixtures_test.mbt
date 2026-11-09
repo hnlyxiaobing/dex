@@ -6,7 +6,7 @@
 //     -> 本文件内嵌字节（比对 SHA-256 相等）
 //     -> @dex.parse / @dex.disasm 输出 <-> dexdump 规范化黄金（本文件 GOLDEN 内嵌黄金常量）
 //
-// ⚠ 缺陷修复记录（2026-11-07，见 DECISIONS.md D3）：
+// ⚠ 缺陷修复记录（2026-11-07，见 docs/DECISIONS.md D3）：
 //   黄金差分首跑曾发现 `@dex.parse` 对**真实** DEX 抛 `DexError::InvalidIndex(MethodId, 49)`
 //   （tvshell-debug，method_ids_size 只有 43）。根因：`dex/parse.mbt::parse_class_data` 把
 //   class_data_item 的 `method_idx_diff` 在 direct_methods 与 virtual_methods 之间**连续累加**，
@@ -264,7 +264,7 @@ fn fx_canon_dex(d : @dex.DexFile) -> String {
 }
 
 ///|
-/// 缺陷修复记录（2026-11-07，见 DECISIONS.md D3）：`parse_class_data` 的 direct/virtual（及 static/instance）
+/// 缺陷修复记录（2026-11-07，见 docs/DECISIONS.md D3）：`parse_class_data` 的 direct/virtual（及 static/instance）
 /// 分段索引复位缺陷已修复（AOSP libdex 行为）；本用例由 KNOWN-DEFECT 钉死用例改为
 /// 真实黄金差分：@dex.parse 输出规范化后必须与 dexdump 黄金逐字段一致。
 test "golden dex tvshell-debug" {

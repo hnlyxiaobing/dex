@@ -56,7 +56,7 @@
 "工具侧 ↔ 黄金 ↔ 解析侧"**三方差分**（工具侧从 `dexdump -d` 抽取规范化文本，黄金为逐行快照，
 解析侧由本库渲染），tvshell-debug、motionshell、fx-multidex、fx-multidex2 四样本全通过；
 该差分曾抓出 `class_data_item` 的 `method_idx_diff` 未分段复位的真实缺陷（记录见
-`DECISIONS.md` D3）。**黄金期望值现已内嵌测试代码，`moon test` 即回归**；三方差分的方法与
+`docs/DECISIONS.md` D3）。**黄金期望值现已内嵌测试代码，`moon test` 即回归**；三方差分的方法与
 结论仅作口径说明保留，不依赖仓库外脚本。
 
 ## 3. 派生与生成命令（可复现）

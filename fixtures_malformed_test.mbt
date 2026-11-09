@@ -153,7 +153,7 @@ test "dex malformed: 表偏移污染越过 checksum 后报 BadTableOffset" {
 
 ///|
 /// map_off 越界检查位于 class_data 解析之后；`parse_class_data` 分段复位缺陷修复
-///（2026-11-07，见 DECISIONS.md D3）后本用例启用。
+///（2026-11-07，见 docs/DECISIONS.md D3）后本用例启用。
 test "dex malformed: map_off 越界报 UnexpectedEof" {
   let src = fixture_tvshell_dex()
   // map_off（header 偏移 52）指向文件尾之外 -> UnexpectedEof(map_off)
