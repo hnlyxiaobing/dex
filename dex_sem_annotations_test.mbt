@@ -1098,3 +1098,166 @@ test "sem annotations: 错误路径" {
   }
   sem_check(got4, msg="class_index 越界应报 InvalidIndex")
 }
+
+///|
+/// `EncodedValue` 变体标签（索引等价性比对用；该 enum 未派生 Eq，
+/// 与 `xref_kind_label` 同思路，只比较可观察标量）。
+fn sem_value_tag(v : @dex.EncodedValue) -> Int32 {
+  match v {
+    @dex.EncodedValue::ValueByte(_) => 0
+    @dex.EncodedValue::ValueShort(_) => 1
+    @dex.EncodedValue::ValueChar(_) => 2
+    @dex.EncodedValue::ValueInt(_) => 3
+    @dex.EncodedValue::ValueLong(_) => 4
+    @dex.EncodedValue::ValueFloat(_) => 5
+    @dex.EncodedValue::ValueDouble(_) => 6
+    @dex.EncodedValue::ValueString(_) => 7
+    @dex.EncodedValue::ValueType(_) => 8
+    @dex.EncodedValue::ValueField(_) => 9
+    @dex.EncodedValue::ValueMethod(_) => 10
+    @dex.EncodedValue::ValueEnum(_) => 11
+    @dex.EncodedValue::ValueMethodType(_) => 12
+    @dex.EncodedValue::ValueMethodHandle(_) => 13
+    @dex.EncodedValue::ValueArray(_) => 14
+    @dex.EncodedValue::ValueAnnotation(_) => 15
+    @dex.EncodedValue::ValueNull => 16
+    @dex.EncodedValue::ValueBoolean(_) => 17
+  }
+}
+
+///|
+/// 索引化防回归（2026-11-09）：`annotations_index` 与单次入口在含注解 /
+/// 静态初值的同一个 DEX 上逐类等价；旧入口签名与错误语义不变。
+test "sem annotations: 索引与单次入口逐类等价" {
+  let fx = sem_build_dex()
+  let data = sem_fixture_bytes(fx)
+  let index = @dex.annotations_index(data)
+  for ci in 0..<2 {
+    let legacy = @dex.class_annotations(data, ci)
+    let indexed = index.class_annotations(ci)
+    match (legacy, indexed) {
+      (None, None) => ()
+      (Some(a), Some(b)) => {
+        sem_check_eq(
+          a.class_annotations.annotations.length(),
+          b.class_annotations.annotations.length(),
+          msg="类注解数一致",
+        )
+        sem_check_eq(
+          a.field_annotations.length(),
+          b.field_annotations.length(),
+          msg="字段注解条目数一致",
+        )
+        sem_check_eq(
+          a.method_annotations.length(),
+          b.method_annotations.length(),
+          msg="方法注解条目数一致",
+        )
+        sem_check_eq(
+          a.parameter_annotations.length(),
+          b.parameter_annotations.length(),
+          msg="形参注解条目数一致",
+        )
+        for i in 0..<a.class_annotations.annotations.length() {
+          let ea = a.class_annotations.annotations[i].annotation
+          let eb = b.class_annotations.annotations[i].annotation
+          sem_check_eq(
+            ea.type_descriptor,
+            eb.type_descriptor,
+            msg="类注解类型一致",
+          )
+          sem_check_eq(
+            ea.elements.length(),
+            eb.elements.length(),
+            msg="注解元素数一致",
+          )
+          for j in 0..<ea.elements.length() {
+            sem_check_eq(
+              ea.elements[j].name,
+              eb.elements[j].name,
+              msg="元素名一致",
+            )
+            sem_check_eq(
+              sem_value_tag(ea.elements[j].value),
+              sem_value_tag(eb.elements[j].value),
+              msg="元素值变体一致",
+            )
+          }
+        }
+      }
+      _ => fail("索引与单次入口的 None/Some 不一致")
+    }
+    let sv_legacy = @dex.static_values(data, ci)
+    let sv_indexed = index.static_values(ci)
+    sem_check_eq(
+      sv_legacy.length(),
+      sv_indexed.length(),
+      msg="静态初值条数一致",
+    )
+    for i in 0..<sv_legacy.length() {
+      sem_check_eq(
+        sem_value_tag(sv_legacy[i]),
+        sem_value_tag(sv_indexed[i]),
+        msg="静态初值变体一致",
+      )
+    }
+  }
+}
+
+///|
+/// 索引复用与错误语义：同一索引多次查询无状态残留；越界 / 截断输入
+/// 的错误与单次入口一致（构建索引时完成头部校验）。
+test "sem annotations: 索引复用与错误语义" {
+  let fx = sem_build_dex()
+  let data = sem_fixture_bytes(fx)
+  let index = @dex.annotations_index(data)
+  let first_ann = index.class_annotations(0)
+  let first_sv = index.static_values(0)
+  for _ in 0..<3 {
+    let ann = index.class_annotations(0)
+    let sv = index.static_values(0)
+    match (first_ann, ann) {
+      (None, None) => ()
+      (Some(a), Some(b)) =>
+        sem_check_eq(
+          a.class_annotations.annotations.length(),
+          b.class_annotations.annotations.length(),
+          msg="复用索引后类注解数稳定",
+        )
+      _ => fail("复用索引后 None/Some 漂移")
+    }
+    sem_check_eq(
+      first_sv.length(),
+      sv.length(),
+      msg="复用索引后静态初值数稳定",
+    )
+  }
+  let mut got_index = false
+  ignore(index.class_annotations(2)) catch {
+    @dex.DexError::InvalidIndex(kind, idx) => {
+      sem_check(
+        kind is @dex.TableKind::ClassDef,
+        msg="索引 InvalidIndex(ClassDef)",
+      )
+      sem_check_eq(idx, 2)
+      got_index = true
+    }
+    _ => ()
+  }
+  sem_check(got_index, msg="索引越界应报 InvalidIndex")
+  let short : Array[Byte] = []
+  for i in 0..<300 {
+    short.push(fx.arr[i])
+  }
+  let short_bytes = Bytes::from_array(short)
+  let mut got_build = false
+  ignore(@dex.annotations_index(short_bytes)) catch {
+    _ => got_build = true
+  }
+  sem_check(got_build, msg="截断输入构建索引应抛 DexError")
+  let mut got_legacy = false
+  ignore(@dex.class_annotations(short_bytes, 0)) catch {
+    _ => got_legacy = true
+  }
+  sem_check(got_legacy, msg="截断输入单次入口应抛 DexError")
+}

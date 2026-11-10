@@ -54,6 +54,23 @@
 | `annotation_item(data : Bytes, off : Int32) -> Annotation raise DexError` | 同上 | 可见性 + encoded_annotation | annotation_item |
 | `encoded_array(data : Bytes, off : Int32) -> Array[EncodedValue] raise DexError` | 同上 | 常量值数组 | encoded_array（AnnotationDefault 等通用） |
 
+### 批量索引（P0 可用性修复轮，加法性新增）
+
+> 单次入口每次调用都会重建六张索引表；逐类遍历 N 个类即 O(N × 表规模)。
+> 批量场景（本仓库 CLI 的 `summary` / `--json`）请用索引：每个 DEX 段只建一次，
+> 再按 class_defs 位置逐类查询，复杂度降为 O(表规模 + 各类注解数据量)。
+> **既有单次入口签名与错误语义逐字未动**（内部委托索引）。
+
+| 签名 | 说明 |
+|---|---|
+| `annotations_index(data : Bytes) -> AnnotationsIndex raise DexError` | 一次头部校验 + 六表读取；逐 dex 使用，不跨 dex 合并（`MultiDexNotMerged` 口径维持） |
+| `AnnotationsIndex::class_annotations(self, class_index : Int32) -> AnnotationsDirectory? raise DexError` | 与全局 `class_annotations` 等价；`annotations_off==0` → `None` |
+| `AnnotationsIndex::static_values(self, class_index : Int32) -> Array[EncodedValue] raise DexError` | 与全局 `static_values` 等价；`static_values_off==0` → `[]` |
+
+`AnnotationsIndex` 为不透明 `pub struct`（包外不可访问字段），构建后只读、无全局状态、可并发；
+包内私有类型 `Ctx` 仍保持私有——索引平铺保存其公开类型的表字段，查询时在包内重组 `Ctx`
+（只搬表引用，不复制表内容）。错误构造集合未扩，越界仍为 `InvalidIndex(ClassDef, ...)`。
+
 `EncodedValue` 解码规则（已用真实样本钉死）：format 字节 = `(value_arg << 5) | value_type`，
 value_type 码表 byte=0x00 short=0x02 char=0x03 int=0x04 long=0x06 float=0x10 double=0x11
 string=0x17 type=0x18 field=0x19 method=0x1a enum=0x1b array=0x1c annotation=0x1d
@@ -131,7 +148,7 @@ CFG、Java 反编译、多 dex 合并、符号解析、DEX 写入/回编、oat/o
 |---|---|
 | `moon check --deny-warn` | ✅ 0 error / 0 warning |
 | `moon build` | ✅ |
-| `moon test` | ✅ 84 / 84（程序化/白盒 37 + 真实样本黄金与冒烟 12 + 畸形派生 7 + 注解/常量值/操作数语义 20 + xref 8；另有 3 个 `#skip` 用例不计入：第三方样本未提取、L3 真机、DEX 无 chunk 概念） |
+| `moon test` | ✅ 96 / 96（程序化/白盒 37 + 真实样本黄金与冒烟 12 + 畸形派生 7 + 注解/常量值/操作数语义 20 + xref 8 + R4 038+ 指令组 10 + P0 索引化回归 2；另有 3 个 `#skip` 用例不计入：第三方样本未提取、L3 真机、DEX 无 chunk 概念；分类明细见 `../README.md` §测试与验收） |
 | `moon fmt --check` | ✅ |
 
 黄金差分：**黄金期望值内嵌于测试代码**（`../fixtures_test.mbt` 黄金常量/内嵌黄金），`moon test`

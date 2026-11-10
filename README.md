@@ -2,7 +2,7 @@
 
 **DEX 解析与 Dalvik 反汇编基础库 —— 容器、表、code_item 与指令解码，纯 MoonBit 实现。**
 
-> 状态：**已实现并门禁全绿**（2026-11-07 语义补全、其后 xref 索引）。`moon check --deny-warn` 0 error / 0 warning；`moon test` 84/84。真实样本（tvshell/motionshell/自建 AnnoSample）解析、注解语义与静态初值均经 `dexdump -d -a` 逐值核对。
+> 状态：**已实现并门禁全绿**（2026-11-07 语义补全、其后 xref 索引，2026-11-09 P0 注解索引化）。`moon check --deny-warn` 0 error / 0 warning；`moon test` 96/96。真实样本（tvshell/motionshell/自建 AnnoSample）解析、注解语义与静态初值均经 `dexdump -d -a` 逐值核对。
 
 ## 定位与为什么存在
 
@@ -35,7 +35,7 @@
 
 ## 测试与验收
 
-- **测试策略（现状）**：程序化 fixture 与白盒 37 例（六表 / class_def / code_item / 方法名 / magic·checksum 错误路径 / 索引边界 / try/catch）；真实样本内嵌（tvshell-debug 4368 B、motionshell 3148 B、fx-multidex 多 dex 2116 B + 1640 B、**R4 fx-dyn 3480 B DEX 038**）+ 黄金期望值差分 12 例——**黄金期望值内嵌于测试代码**（`fixtures_test.mbt` 黄金常量），`moon test` 即回归；畸形派生 7 例；注解/常量值/操作数语义 20 例（程序化 fixture 覆盖 VALUE_FIELD/METHOD/窄宽编码 + 自建 AnnoSample 样本（javac 21 + d8 自建，4264 B，SHA-256 `16dbf2d6…52d0d`）与 tvshell（VALUE_METHOD/VALUE_NULL/静态字符串初值）经 `dexdump -d -a` 逐值核对）；xref 索引 8 例；**R4 038+ 指令组 10 例**（表级事实/句柄与调用点名字/038+ 操作数标注/IndexCallSite 结构化视图/res0·kind·越界·截断错误路径）。合计 **94/94**（另 3 例 `#skip` 明示不执行：第三方样本未提取、真机测试、DEX 无 chunk 概念）。
+- **测试策略（现状）**：程序化 fixture 与白盒 37 例（六表 / class_def / code_item / 方法名 / magic·checksum 错误路径 / 索引边界 / try/catch）；真实样本内嵌（tvshell-debug 4368 B、motionshell 3148 B、fx-multidex 多 dex 2116 B + 1640 B、**R4 fx-dyn 3480 B DEX 038**）+ 黄金期望值差分 12 例——**黄金期望值内嵌于测试代码**（`fixtures_test.mbt` 黄金常量），`moon test` 即回归；畸形派生 7 例；注解/常量值/操作数语义 20 例（程序化 fixture 覆盖 VALUE_FIELD/METHOD/窄宽编码 + 自建 AnnoSample 样本（javac 21 + d8 自建，4264 B，SHA-256 `16dbf2d6…52d0d`）与 tvshell（VALUE_METHOD/VALUE_NULL/静态字符串初值）经 `dexdump -d -a` 逐值核对）；xref 索引 8 例；**R4 038+ 指令组 10 例**（表级事实/句柄与调用点名字/038+ 操作数标注/IndexCallSite 结构化视图/res0·kind·越界·截断错误路径）；**P0 索引化回归 2 例**（新增 `annotations_index` 索引、每个 dex 段只建一次解析上下文；公开 API 纯加法，`pkg.generated.mbti` +15/−0，既有签名逐字未动，见 `docs/API.md`）。合计 **96/96**（另 3 例 `#skip` 明示不执行：第三方样本未提取、真机测试、DEX 无 chunk 概念）。
 - **验收状态**：开发期"工具侧 `dexdump` ↔ 黄金 ↔ 解析侧 `@dex.parse`"三方差分（工具侧↔黄金↔解析侧）全通；黄金值已内嵌测试代码，`moon test` 即回归 —— 三方差分首跑发现的真实 DEX 缺陷 `InvalidIndex(MethodId, 49)`（`method_idx_diff` 未在 direct/virtual 分段复位）**已修复**（`parse_class_data` 分段复位，AOSP libdex 行为），tvshell-debug 与 motionshell 解析侧差分均 exit 0，见 `docs/DESIGN.md` §13 与 `docs/DECISIONS.md` D3。
 - 测试样本：来源、生成方式（javac/d8 自建）、SHA-256 与 `dexdump` 规范化口径见 `tests/ASSETS.md`；许可不明的第三方 APK 未入库（开发期差分复核）。
 
@@ -50,7 +50,7 @@
 | 真实 DEX 解析（解析侧差分） | ✅ **全通**（P0 缺陷已修复，DESIGN §13 / DECISIONS D3） |
 | 注解语义 / 静态初值 / 结构化操作数（`semval.mbt` `annot.mbt` `operand.mbt`） | ✅（加法性新增） |
 | xref 调用点 / 字段访问点索引（`xref.mbt`） | ✅ |
-| `moon check --deny-warn` / `moon build` / `moon test` / `moon fmt --check` | ✅ 全绿（84/84） |
+| `moon check --deny-warn` / `moon build` / `moon test` / `moon fmt --check` | ✅ 全绿（96/96） |
 
 ## 开发顺序说明
 

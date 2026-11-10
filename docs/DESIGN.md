@@ -1,6 +1,6 @@
 # dex · 设计契约（DESIGN.md）
 
-> 初版 2026-11-06 ｜ 更新 2026-11-07 ｜ 状态：**已实现**（表解析 / code_item / 指令解码 / smali 输出均为真实实现），门禁全绿（`moon test` 84/84）；真实样本 P0 缺陷已修复（见 §13）
+> 初版 2026-11-06 ｜ 更新 2026-11-07 ｜ 状态：**已实现**（表解析 / code_item / 指令解码 / smali 输出均为真实实现），门禁全绿（`moon test` 84/84，当时值；现行 96/96 见 `../README.md`）；真实样本 P0 缺陷已修复（见 §13）
 
 ## 1. 分层位置与职责
 
@@ -89,7 +89,7 @@ L1 逆向输入层，纯 MoonBit 叶子库。职责：**单个 DEX 文件 → �
 | 注解/常量值语义（`../dex_sem_annotations_test.mbt` 9 + `../dex_sem_consts_test.mbt` 5） | 四类注解目录、encoded_value 全 16 类型（含 VALUE_FIELD/METHOD/ENUM/NULL/窄宽/左对齐浮点）、嵌套注解、static_values 前缀语义、错误路径；真实样本 = javac 21 + d8 自建 AnnoSample.dex（4264 B，SHA-256 `16dbf2d6…52d0d`，见 `../tests/ASSETS.md`）+ tvshell（VALUE_METHOD/VALUE_NULL/加密字符串入口），`dexdump -d -a` 逐值核对 | ✅ 14 例 |
 | 结构化操作数（`../dex_sem_operand_test.mbt`） | 十种操作数格式的 regs/literal/branch/index 视图、payload 空视图、名字解析 helper、真实样本 main/Kind.\<clinit\> 与 dexdump `// method@00xx` 等对照 | ✅ 6 例 |
 | xref 索引（`../xref_test.mbt`） | 计数恒等式与 kind/opcode 族一致、invoke 五族与字段四类分类、abstract/native/外部方法口径、越界 `InvalidIndex`、payload 不产 site、排序稳定、`method_ref_of` 反查 | ✅ 8 例 |
-| 门禁 | `moon fmt --check` / `moon check --deny-warn` / `moon build` / `moon test` | ✅ 全绿（84/84） |
+| 门禁 | `moon fmt --check` / `moon check --deny-warn` / `moon build` / `moon test` | ✅ 全绿（96/96） |
 
 skip 机制：MoonBit 原生 `#skip` 属性（默认不计入 `Total tests`；`moon test --include-skipped` 才执行）。
 所有未跑通/未内嵌的用例都用 `#skip` 显式标注（3 例：第三方样本未提取、L3 真机、DEX 无 chunk 概念），**绝不冒充通过**。

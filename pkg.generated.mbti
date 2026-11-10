@@ -10,6 +10,8 @@ pub fn annotation_item(Bytes, Int32) -> Annotation raise DexError
 
 pub fn annotation_set(Bytes, Int32) -> AnnotationSet raise DexError
 
+pub fn annotations_index(Bytes) -> AnnotationsIndex raise DexError
+
 pub fn build_xref(DexFile) -> XrefIndex raise DexError
 
 pub fn call_site_name(DexFile, Int32) -> String raise DexError
@@ -94,6 +96,19 @@ pub(all) struct AnnotationsDirectory {
   method_annotations : Array[MethodAnnotations]
   parameter_annotations : Array[ParameterAnnotations]
 }
+
+pub struct AnnotationsIndex {
+  data : Bytes
+  strings : Array[String]
+  types : Array[String]
+  protos : Array[ProtoId]
+  fields : Array[FieldDef]
+  methods : Array[MethodDef]
+  handles : Array[MethodHandleItem]
+  call_sites : Array[CallSiteItem]
+}
+pub fn AnnotationsIndex::class_annotations(Self, Int32) -> AnnotationsDirectory? raise DexError
+pub fn AnnotationsIndex::static_values(Self, Int32) -> Array[EncodedValue] raise DexError
 
 pub(all) struct CallSiteItem {
   call_site_off : Int32

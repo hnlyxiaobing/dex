@@ -155,6 +155,8 @@ fn json_dump_section(
   d : @dex.DexFile,
 ) -> String raise {
   let parts : Array[String] = []
+  // 每个 dex 段只建一次索引：注解 / 静态初值逐类查询复用同一份解析上下文。
+  let index = @dex.annotations_index(data)
   parts.push("{\"name\":\{json_escape(name)},\"header\":{")
   parts.push("\"magic\":\{json_escape(magic_str(d.version))},")
   parts.push("\"checksum\":\{json_escape(hex8(d.checksum))},")
@@ -222,9 +224,9 @@ fn json_dump_section(
       )
     }
     parts.push("],\"annotations\":")
-    parts.push(json_ann_array(data, d, ci))
+    parts.push(json_ann_array(index, d, ci))
     parts.push(",\"static_values\":")
-    parts.push(json_svc_array(data, ci))
+    parts.push(json_svc_array(index, ci))
     parts.push("}")
   }
   parts.push("]}")

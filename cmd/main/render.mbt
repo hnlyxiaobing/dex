@@ -192,12 +192,12 @@ fn ann_elements_text(elements : Array[@dex.AnnotationElement]) -> String {
 /// target：类=描述符；字段/方法=smali 引用（Lcls;->name:type / Lcls;->name(params)ret）；
 /// 形参=方法引用 + `#p<序号>`；visibility=build|runtime|system。
 fn ann_lines(
-  data : Bytes,
+  index : @dex.AnnotationsIndex,
   d : @dex.DexFile,
   class_index : Int32,
 ) -> Array[String] raise @dex.DexError {
   let out : Array[String] = []
-  match @dex.class_annotations(data, class_index) {
+  match index.class_annotations(class_index) {
     None => ()
     Some(dir) => {
       let cls = d.classes[class_index].type_descriptor
@@ -246,12 +246,12 @@ fn ann_lines(
 /// `static_values` 返回静态字段前缀省略编码（空数组=无初值）。
 /// 记录：`SVC|<cls>|<i>|<value>`；i 为该类静态字段序号（与 FLD 记录顺序对应）。
 fn svc_lines(
-  data : Bytes,
+  index : @dex.AnnotationsIndex,
   d : @dex.DexFile,
   class_index : Int32,
 ) -> Array[String] raise @dex.DexError {
   let out : Array[String] = []
-  let vals = @dex.static_values(data, class_index)
+  let vals = index.static_values(class_index)
   let mut i = 0
   for v in vals {
     out.push(
@@ -269,6 +269,8 @@ fn summary_lines(
   d : @dex.DexFile,
 ) -> Array[String] raise @dex.DexError {
   let out : Array[String] = []
+  // 每个 dex 段只建一次索引：逐类 ANN/SVC 查询复用同一份解析上下文。
+  let index = @dex.annotations_index(data)
   for l in hdr_lines(d) {
     out.push(l)
   }
@@ -302,10 +304,10 @@ fn summary_lines(
         "MTH|\{c.type_descriptor}|\{d.strings[m.name_index]}|\{proto_str(d.protos[m.proto_index])}|0x\{hex_min(m.access_flags, 4)}",
       )
     }
-    for l in ann_lines(data, d, ci) {
+    for l in ann_lines(index, d, ci) {
       out.push(l)
     }
-    for l in svc_lines(data, d, ci) {
+    for l in svc_lines(index, d, ci) {
       out.push(l)
     }
   }
@@ -336,14 +338,14 @@ fn json_ann_item(a : @dex.Annotation) -> String {
 ///|
 /// --json：注解数组片段（口径与 ANN| 记录一致）。
 fn json_ann_array(
-  data : Bytes,
+  index : @dex.AnnotationsIndex,
   d : @dex.DexFile,
   class_index : Int32,
 ) -> String raise @dex.DexError {
   let parts : Array[String] = []
   parts.push("[")
   let mut first = true
-  match @dex.class_annotations(data, class_index) {
+  match index.class_annotations(class_index) {
     None => ()
     Some(dir) => {
       let cls = d.classes[class_index].type_descriptor
@@ -406,12 +408,12 @@ fn json_ann_array(
 ///|
 /// --json：静态初值数组片段（口径与 SVC| 记录一致）。
 fn json_svc_array(
-  data : Bytes,
+  index : @dex.AnnotationsIndex,
   class_index : Int32,
 ) -> String raise @dex.DexError {
   let parts : Array[String] = []
   parts.push("[")
-  let vals = @dex.static_values(data, class_index)
+  let vals = index.static_values(class_index)
   let mut first = true
   let mut i = 0
   for v in vals {
