@@ -1,61 +1,116 @@
-# hnlyxiaobing/dex
+# dex · DEX 解析与反汇编
 
-**DEX 解析与 Dalvik 反汇编基础库 —— 容器、表、code_item 与指令解码，纯 MoonBit 实现。**
+> 独立发布单元 ｜ L1 逆向输入 ｜ `preferred_target = wasm` ｜ Apache-2.0
+> 状态：`moon test` **96/96** 通过（2026-11-11 本机实测，另有 3 个 `#skip` 用例不计入）；本文件是本仓库**唯一**说明文档。
+> 公开 API 以 `pkg.generated.mbti` 为准（由 `moon info` 生成，禁手工编辑）；加法性变更须登记簿记 + 快照审阅 + 快照门禁。
 
-> 状态：**已实现并门禁全绿**（2026-11-07 语义补全、其后 xref 索引，2026-11-09 P0 注解索引化）。`moon check --deny-warn` 0 error / 0 warning；`moon test` 96/96。真实样本（tvshell/motionshell/自建 AnnoSample）解析、注解语义与静态初值均经 `dexdump -d -a` 逐值核对。
+## 1. 定位与边界
 
-## 定位与为什么存在
+把 DEX 字节解析成六表结构、指令序列、注解与交叉引用，输出可读清单与 smali 风格反汇编。
 
-生态调研（2026-11-06）：`dex` 唯一命中仍是 `IvanAXu/BioSeqs@0.1.13` 的生物序列 `dexseq_demo`（误报），DEX 解析在 MoonBit 生态完全空白。DEX 是 Android 应用的实际代码载体，没有它就无法在 MoonBit 侧做逆向分析、方法引用图与协议线索提取。规范来自 AOSP `dalvik-bytecode`（8-bit opcode `00`–`ff`；基础 218 条定义至 `0xE2`，DEX 038+ 的 `0xFA`–`0xFF` 为 MethodHandle 体系 6 条），公开稳定。据此判定为**纯 MoonBit 自研**（选型背景与理由见 `docs/DECISIONS.md` D2）。
+**能力**
 
-`iceBear67/classfile@0.2.0` 证明纯 MoonBit 可写字节码解析器，但该包 `build_status=legacy`、仍带 `moon.pkg.json`，v0.10.19 下**只作设计参照，不作依赖**（理由见 `docs/DECISIONS.md` D2）。
+- header / string / type / proto / field / method / class_def 六表解析与索引校验
+- `code_item` 指令解码（含 DEX 038+ 指令组）、结构化操作数与全方法 opcode 序列
+- 注解目录、静态字段初值、方法句柄 / 调用点
+- `build_xref` 九种 kind 的调用点与字段访问点索引
+- `dex-cli dump --view summary|norm|xref` 与 `disasm`（`--method` / `--json`）
 
-## 能力范围 / 非目标
+**非目标**
 
-- **做**：单 DEX 的 header / string / type / proto / field / method / class_def 六表；`code_item`、try/catch 表、`debug_info` 原始字节；218 条基础 Dalvik 指令 + DEX 038+ 的 `0xFA`–`0xFF` 6 条（invoke-polymorphic{,/range}、invoke-custom{,/range}、const-method-handle、const-method-type）解码；smali 风格文本输出。
-- **做（语义补全）**：注解语义——annotation_directory_item（class/field/method/parameter 四类）、annotation_set_item、annotation_item、encoded_annotation 与 encoded_value 全类型解码（数组/枚举/嵌套注解/NULL/**R4：0x15 MethodType / 0x16 MethodHandle**）；static_values 静态字段初值与 encoded_array（**加密字符串入口**）；**R4：DEX 038+ 支撑表**——`method_handles_item`（kind 0x00–0x08 与 res0 校验）、`call_site_id_item`（encoded_array 布局 `[bsm, name, type, args…]`），句柄/调用点可读名字渲染与指令操作数标注（`call_site@N{…}`、`method_handle@N{kind target}`、proto 签名），非法 res0/kind/索引一律报 `DexError`；指令结构化操作数视图（regs/literal/branch/index）与按表解析名字 helper（invoke→`Lcls;->name(sig)ret`、const-string→字符串池项、字段→`Lcls;->name:type`、类型→类名）。
-- **做**：调用点 / 字段访问点索引（xref）——`build_xref` 产出 `XrefIndex`，按方法/字段/调用方/被调方查询 `XrefSite`（kind + code 偏移 + 目标引用名）。
-- **不做**：控制流图、Java 反编译、多 dex 合并（交上层；组合模式 = 逐 dex `parse` + 调用方编排，`MultiDexNotMerged` 语义维持）、符号解析、DEX 写入/回编、oat/odex/vdex。
-- **与 axml、apk 互不知晓**（模块边界决策见 `docs/DECISIONS.md` D1）；可被单独依赖。
+- 不做 Java 反编译、CFG、跨 dex 合并或虚分派展开
+- 不覆盖反射、MethodHandle 运行时目标、JNI RegisterNatives、动态代理与运行时织入
+- 不 import 任何其他工作区模块
 
-## 公开接口（速览）
+## 2. 关键设计决策（本仓库自足记录）
 
-`parse(Bytes) -> DexFile raise DexError`、`DexFile::{classes, methods, code, strings}`、`disasm(DexFile, MethodHandle) -> String`；注解/常量值：`class_annotations(Bytes, Int) -> AnnotationsDirectory?`、`static_values(Bytes, Int) -> Array[EncodedValue]`（加密字符串入口）、`annotation_set` / `annotation_item` / `encoded_array`；**R4 038+**：`method_handles(Bytes)` / `call_sites(Bytes)`、`method_handle_name` / `call_site_name` / `proto_name`（DexFile 视图）、`method_handle_ref_name` / `call_site_ref_name`（Bytes 视图）；操作数：`instruction_operands(Instruction) -> InsnOperands`、`string_ref_name` / `type_ref_name` / `field_ref_name` / `method_ref_name` / `resolve_ref_name` / `instruction_ref_name`；xref：`build_xref(DexFile) -> XrefIndex`、`XrefIndex::{sites, sites_in, callers, callees, method_sites, field_sites}`、`method_ref_of`。完整签名见 `docs/API.md`（全部加法性新增，冻结面零改动）。
+- 以 `Bytes` 为输入契约，自研解析而不移植 `classfile@0.2.0`（legacy 格式，仅作参照）。
+- P0 防回归：`class_data_item` 的 `method_idx_diff` 必须在 direct / virtual 分段处复位；该缺陷曾由黄金差分抓出。
+- 性能门禁：7.26 MB `classes.dex` 的 `summary` 由 >540 s 优化到 1,014 ms，做法是每类缓存六表而非重建。
+- 全方法 opcode 序列差分取代抽样差分，以保持黄金证据链的捕获能力。
 
-## 依赖
+## 3. 公开 API 索引（自动抽取 `pkg.generated.mbti` 的 `pub` 声明行；完整字段见快照）
 
-- **零依赖**；独立 `moon.mod`，`moon check` 独立通过。
-- 无第三方依赖计划；`dexdump`（Android build-tools）只作开发期差分基准，不链接、不入库。
+```text
+pub fn annotation_item(Bytes, Int32) -> Annotation raise DexError
+pub fn annotation_set(Bytes, Int32) -> AnnotationSet raise DexError
+pub fn annotations_index(Bytes) -> AnnotationsIndex raise DexError
+pub fn build_xref(DexFile) -> XrefIndex raise DexError
+pub fn call_site_name(DexFile, Int32) -> String raise DexError
+pub fn call_site_ref_name(Bytes, Int32) -> String raise DexError
+pub fn call_sites(Bytes) -> Array[CallSiteItem] raise DexError
+pub fn class_annotations(Bytes, Int32) -> AnnotationsDirectory? raise DexError
+pub fn disasm(DexFile, Int32) -> String raise DexError
+pub fn encoded_array(Bytes, Int32) -> Array[EncodedValue] raise DexError
+pub fn field_ref_name(DexFile, Int32) -> String raise DexError
+pub fn instruction_operands(Instruction) -> InsnOperands raise DexError
+pub fn instruction_ref_name(DexFile, Instruction) -> String? raise DexError
+pub fn method_handle_name(DexFile, Int32) -> String raise DexError
+pub fn method_handle_ref_name(Bytes, Int32) -> String raise DexError
+pub fn method_handles(Bytes) -> Array[MethodHandleItem] raise DexError
+pub fn method_ref_name(DexFile, Int32) -> String raise DexError
+pub fn method_ref_of(DexFile, MethodDef) -> Int32?
+pub fn parse(Bytes) -> DexFile raise DexError
+pub fn proto_name(DexFile, Int32) -> String raise DexError
+pub fn resolve_ref_name(DexFile, IndexKind, Int32) -> String raise DexError
+pub fn static_values(Bytes, Int32) -> Array[EncodedValue] raise DexError
+pub fn string_ref_name(DexFile, Int32) -> String raise DexError
+pub fn type_ref_name(DexFile, Int32) -> String raise DexError
+pub(all) struct Annotation {
+pub(all) struct AnnotationElement {
+pub(all) struct AnnotationSet {
+pub(all) enum AnnotationVisibility {
+pub(all) struct AnnotationsDirectory {
+pub fn AnnotationsIndex::class_annotations(Self, Int32) -> AnnotationsDirectory? raise DexError
+pub fn AnnotationsIndex::static_values(Self, Int32) -> Array[EncodedValue] raise DexError
+pub(all) struct CallSiteItem {
+pub(all) struct ClassDef {
+pub(all) struct CodeItem {
+pub(all) struct DexFile {
+pub fn DexFile::classes(Self) -> Array[ClassDef]
+pub fn DexFile::code(Self, Int32) -> CodeItem? raise DexError
+pub fn DexFile::methods(Self, Int32) -> Array[MethodDef] raise DexError
+pub fn DexFile::strings(Self) -> Array[String]
+pub(all) enum DexVersion {
+pub(all) struct EncodedAnnotation {
+pub(all) enum EncodedValue {
+pub(all) struct FieldAnnotations {
+pub(all) struct FieldDef {
+pub(all) enum IndexKind {
+pub(all) struct InsnOperands {
+pub(all) struct Instruction {
+pub(all) struct MethodAnnotations {
+pub(all) struct MethodDef {
+pub(all) struct MethodHandleItem {
+pub fn MethodHandleItem::is_field_ref(Self) -> Bool
+pub fn MethodHandleItem::is_method_ref(Self) -> Bool
+pub(all) enum MethodHandleKind {
+pub(all) struct ParameterAnnotations {
+pub(all) struct ProtoId {
+pub(all) enum TableKind {
+pub(all) struct TryItem {
+pub fn XrefIndex::callees(Self, Int32) -> Array[XrefSite] raise DexError
+pub fn XrefIndex::callers(Self, Int32) -> Array[XrefSite] raise DexError
+pub fn XrefIndex::field_sites(Self, Int32) -> Array[XrefSite] raise DexError
+pub fn XrefIndex::method_sites(Self, Int32) -> Array[XrefSite] raise DexError
+pub fn XrefIndex::sites(Self) -> Array[XrefSite]
+pub fn XrefIndex::sites_in(Self, Int32) -> Array[XrefSite] raise DexError
+pub(all) enum XrefKind {
+pub(all) struct XrefSite {
+```
 
-## 平台与许可风险
+## 4. 依赖、平台与许可
 
-- 平台：全后端（`preferred_target = "wasm"`，未改动）；桌面即可测试。
-- 许可：本仓库 Apache-2.0；AOSP 字节码文档 CC-BY-4.0、源码片段 Apache-2.0。无外部二进制。
-- 风险：指令表大而细；try/catch 与 `debug_info` 偏移；DEX v039/v040/v041 差异；厂商加密或畸形 DEX（apktool 3.0.0 起默认 `--only-main-classes` 正是为此）。策略为带 `TableKind`/索引的显式错误 + 跳过未知结构（错误模型见 `docs/DECISIONS.md` D4）。
+零第三方依赖；`preferred_target = wasm`；Apache-2.0。
 
-## 测试与验收
+## 5. 命令行与验证
 
-- **测试策略（现状）**：程序化 fixture 与白盒 37 例（六表 / class_def / code_item / 方法名 / magic·checksum 错误路径 / 索引边界 / try/catch）；真实样本内嵌（tvshell-debug 4368 B、motionshell 3148 B、fx-multidex 多 dex 2116 B + 1640 B、**R4 fx-dyn 3480 B DEX 038**）+ 黄金期望值差分 12 例——**黄金期望值内嵌于测试代码**（`fixtures_test.mbt` 黄金常量），`moon test` 即回归；畸形派生 7 例；注解/常量值/操作数语义 20 例（程序化 fixture 覆盖 VALUE_FIELD/METHOD/窄宽编码 + 自建 AnnoSample 样本（javac 21 + d8 自建，4264 B，SHA-256 `16dbf2d6…52d0d`）与 tvshell（VALUE_METHOD/VALUE_NULL/静态字符串初值）经 `dexdump -d -a` 逐值核对）；xref 索引 8 例；**R4 038+ 指令组 10 例**（表级事实/句柄与调用点名字/038+ 操作数标注/IndexCallSite 结构化视图/res0·kind·越界·截断错误路径）；**P0 索引化回归 2 例**（新增 `annotations_index` 索引、每个 dex 段只建一次解析上下文；公开 API 纯加法，`pkg.generated.mbti` +15/−0，既有签名逐字未动，见 `docs/API.md`）。合计 **96/96**（另 3 例 `#skip` 明示不执行：第三方样本未提取、真机测试、DEX 无 chunk 概念）。
-- **验收状态**：开发期"工具侧 `dexdump` ↔ 黄金 ↔ 解析侧 `@dex.parse`"三方差分（工具侧↔黄金↔解析侧）全通；黄金值已内嵌测试代码，`moon test` 即回归 —— 三方差分首跑发现的真实 DEX 缺陷 `InvalidIndex(MethodId, 49)`（`method_idx_diff` 未在 direct/virtual 分段复位）**已修复**（`parse_class_data` 分段复位，AOSP libdex 行为），tvshell-debug 与 motionshell 解析侧差分均 exit 0，见 `docs/DESIGN.md` §13 与 `docs/DECISIONS.md` D3。
-- 测试样本：来源、生成方式（javac/d8 自建）、SHA-256 与 `dexdump` 规范化口径见 `tests/ASSETS.md`；许可不明的第三方 APK 未入库（开发期差分复核）。
+- `moon run cmd/main --target native -- dump <apk|dex> [--view ...] [--json]` / `disasm <apk|dex> [--method <ref>]`；`--json` 同步输出 `annotations` / `static_values`。
+- 复验：`moon clean` → `moon check --deny-warn` → `moon build` → `moon test` → `moon fmt --check` → `moon info` 后检查 `pkg.generated.mbti` 无意外 diff。
+- 本仓库为独立 Git 仓库，文档与 CI 均自包含，不依赖工作区其他目录。
 
-## 当前状态
+## 6. 风险与未决
 
-| 项 | 状态 |
-|---|---|
-| `dex.mbt` 数据结构 + 文档注释 | ✅ |
-| `pkg.generated.mbti` API 快照 | ✅ |
-| 表解析 / 指令解码 / smali 输出 | ✅ 真实实现（无 `declare`） |
-| 真实样本内嵌 + 黄金差分（期望值内嵌测试） | ✅ |
-| 真实 DEX 解析（解析侧差分） | ✅ **全通**（P0 缺陷已修复，DESIGN §13 / DECISIONS D3） |
-| 注解语义 / 静态初值 / 结构化操作数（`semval.mbt` `annot.mbt` `operand.mbt`） | ✅（加法性新增） |
-| xref 调用点 / 字段访问点索引（`xref.mbt`） | ✅ |
-| `moon check --deny-warn` / `moon build` / `moon test` / `moon fmt --check` | ✅ 全绿（96/96） |
+- xref 盲区：反射、运行时目标解析、JNI RegisterNatives、跨 dex 合并、注解/encoded_array 引用。
+- 资源表与 DEX 的关联由组合根完成，本库不感知 APK 容器。
 
-## 开发顺序说明
-
-表解析先行（上层的方法引用图与协议线索提取只需要 header + 六表 + 方法名），完整 218 条指令解码与注解/静态初值/操作数语义层随后补齐，语义层全部以加法性新增落地（顺序考量见 `docs/DECISIONS.md` D5）。
-
-## 文档索引
-
-`docs/DESIGN.md`（设计契约）· `docs/API.md`（公开签名）· `docs/DECISIONS.md`（设计决策记录）· `tests/ASSETS.md`（测试样本清单）· `README.mbt.md`（包说明）
