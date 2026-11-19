@@ -2,7 +2,7 @@
 
 > 建立：2026-11-16 ｜ 状态：设计生效，随开发文档逐包落地 ｜ 适用仓库：本仓库（独立自包含）
 > 配套文档：[2026-11-16-structural-fidelity-dev-plan.md](2026-11-16-structural-fidelity-dev-plan.md)（`T-W*-*` 验收 ID 一一对应；B# 证据行出自该文档 §0）
-> 现状基线：2026-11-16 五门禁实测全绿，`moon test` 96/96（99 条声明 − 3 条 `#skip`，见 §6.4）。
+> 现状基线：2026-11-16 五门禁实测全绿，`moon test` 96/96（99 条声明 − 3 条 `#skip`，见 §6.4）。W1/W2/W3 落地后（2026-11-19）`moon test` 为 109/109（另 3 条 `#skip`）。
 
 ## 1. 第一性原理：本库的正确性是什么
 
@@ -63,7 +63,7 @@ builder 能力清单（F-A 构造维度）：magic/版本（035–041/非法）�
   - P3 幂等律：同一输入两次 parse/disasm/build_xref 输出逐字节一致（纯函数无状态；待建显式用例）；
   - P4 双通道一致律：库 API 渲染与 CLI norm 记录行同源一致（L2 黄金已钉，W4–W8 新视图不得改变旧通道）；
   - P5 防火墙律（W2/W7/W8 专属）：新函数引入后，旧 API 在全部既有语料上输出逐字节不变。
-- 位翻转：adler32 单 bit → BadMagic（已有）；SHA-1 区/body 单 bit → signature_ok=false（T-W2-2/3 待建）；ZIP CRC 单 bit → 退出码 1（T-W3-3 待建）；opcode 翻转到未定义域 → InvalidInstruction（已有 0x3E 用例）。
+- 位翻转：adler32 单 bit → BadMagic（已有）；SHA-1 区/body 单 bit → signature_ok=false（T-W2-2/3 已建，W2 落地）；ZIP CRC 单 bit → 退出码 1 + 整体拒绝（T-W3-3 已建，W3 落地）；opcode 翻转到未定义域 → InvalidInstruction（已有 0x3E 用例）。
 - 边界值矩阵：insns_size=0/恰在 EOF±1；uleb128 最长 5 字节/超 5 字节；fill-array-data size=0x3fffffff/width 边界（B10 上界）；map size=0；空六表；header 恰 0x70 字节；float/double 1/2/3/4 与 1..8 字节全宽度（B5 对齐规则）。
 - 截断扫描：每个 F-B fixture 全前缀（大样本抽样 + 全部结构边界点：header 各字段尾、各表项边界、code_item 头尾、payload 头尾、debug 流逐字节），只允许 DexError 9 变体，不允许 panic/挂起。现状：edge-dex-truncated-512.dex + 畸形桶已覆盖主干；**W4/W5/W6/W8 新解析路径必须各自进扫描集**（DoD 强制）。
 - 变异语料：固定种子随机替换/插入/删除，每轮 ≥1000 变异体（现状：fixtures_malformed_test.mbt 语料桶为手工定点变异；随机变异 runner 待建，归 L1 增强，不阻塞 W#）。
@@ -96,25 +96,25 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 | F10 | debug_info / try-catch | ✓ | ✓ | ✓ | 部分 | ✓ | B7/B8 仅长度校验+raw | 状态机→W5；多类型→W8 |
 | F11 | map_list | ✓ | ✓ | ✓ | ✓ | ✓ | B9 仅 raw | 结构化视图→W4 |
 | F12 | 值化错误体系（9 变体） | ✓ | ✓ | — | — | ✓ | B11；簿记 9/9（§6.2） | 新路径复用变体须补簿记 |
-| F13 | CLI 三视图/JSON/退出码 | ✓ | ✓ | ✓ | ✓ | ✓ | B14 已实现 | CRC 拒绝场景→W3 |
+| F13 | CLI 三视图/JSON/退出码 | ✓ | ✓ | ✓ | ✓ | ✓ | B14 已实现 | CRC 拒绝场景已落地（W3，T-W3-3） |
 | F14 | wasm/native 双目标 | ✓ | — | — | — | — | 双目标 moon test 绿；逐字节差分待建 | parity 脚本→L5 |
 | S1 | 预期场景：APK→dex 条目→summary/norm/xref 端到端 | | | ✓ | ✓ | ✓ | 已实现（zipmin 路径） | 无 |
 | S2 | 预期场景：--method 单方法 disasm + --json | ✓ | | ✓ | | ✓ | 已实现 | 无 |
 | S3 | 安全拒绝：ZIP 魔数/尾随拼接 → MultiDexNotMerged + 退出码 1 | ✓ | ✓ | | | ✓ | 已实现 | 无 |
 | S4 | 安全拒绝：--entry 用于非 APK → 退出码 2 | ✓ | | | | ✓ | 已实现 | 无 |
-| S5 | 安全拒绝：CRC 损坏条目写盘前整体拒绝 | | 待建 | | | 待建 | B15 缺口 | →W3（T-W3-3） |
+| S5 | 安全拒绝：CRC 损坏条目写盘前整体拒绝 | ✓ | ✓ | | | ✓ | W3 已实现（T-W3-3） | 无 |
 | S6 | 预期场景：大 DEX 性能门禁（summary<5s/norm<10s） | | | | | ✓ | B13 bench 第六道可选门禁 | 无 |
 | C1 | 截断/畸形无 panic（9 变体白名单） | ✓ | ✓ | | | ✓ | 主干已覆盖 | 新路径进扫描→W4/W5/W6/W8 |
 | C2 | 内存有界（payload 溢出上界/inflate max_output） | ✓ | ✓ | | | ✓ | B10/B15 已实现 | 无 |
 | C3 | API 冻结（快照纯加法/冻结枚举零新变体） | | | | | ✓ | L5 门禁绿 | 每包 DoD 勾选 |
 | C4 | 许可红线（第三方样本零入库） | | | | | | git 跟踪清单实测合规 | ASSETS.md 登记→W1 |
-| C5 | 防火墙（新函数不改旧语义） | 待建 | 待建 | | | | 现状无新函数 | →W2/W7/W8（P5 律） |
+| C5 | 防火墙（新函数不改旧语义） | ✓ | 待建 | | | ✓ | W2 已实现（P5 律，T-W2-5） | →W7/W8（P5 律） |
 
 ### 6.2 错误变体触发簿记（9/9 强制，现状全绿）
 
 | 变体 | 触发 fixture（现状，显式断言变体名） | 新增触发（待建） |
 |---|---|---|
-| UnexpectedEof(Int32) | dex_test.mbt L640–656（截断输入/file_size 不符）；fixtures_malformed_test.mbt L157（map_off 越界） | W4 map 截断；W2 len<32 |
+| UnexpectedEof(Int32) | dex_test.mbt L640–656（截断输入/file_size 不符）；fixtures_malformed_test.mbt L157（map_off 越界）；W2 len<32 已建 | W4 map 截断 |
 | BadMagic(String) | dex_test.mbt L593–604（坏 magic）；L608–623（checksum mismatch 复用口径钉死） | 无（语义 quirk 冻结） |
 | UnsupportedVersion(String) | dex_test.mbt L625–636（版本不在 035–041） | 无 |
 | BadTableOffset(TableKind,Int32) | dex_sem_annotations_test.mbt L1064–1077（坏 visibility/保留 value_type）；invoke 路径 res0 非 0 | W4 map 越界映射约定 |
@@ -145,7 +145,7 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 | dex L3 device [SKIPPED: 本轮不执行真机测试] | fixtures_test.mbt L318–319 | 真机 oracle 本轮不执行 |
 | dex malformed: 未知 chunk [SKIPPED: DEX 无 chunk 概念] | fixtures_malformed_test.mbt L194–195 | 格式无此概念，占位防误报 |
 
-计数口径：99 条 test 声明 − 3 #skip = 96 执行（2026-11-16 实测 96/96）；`moon test --include-skipped` 才执行 skip 项，其结果单独报告。
+计数口径：99 条 test 声明 − 3 #skip = 96 执行（2026-11-16 实测 96/96）；W2/W3 落地后为 112 条声明 − 3 #skip = 109 执行（2026-11-19 实测 109/109）；`moon test --include-skipped` 才执行 skip 项，其结果单独报告。
 
 ## 7. L4 CLI 场景 E2E
 
@@ -160,7 +160,7 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 | E7 --entry 误用 | `main.exe <dex> --entry x` | 2（参数误用，B14） |
 | E8 坏 magic/checksum | `main.exe <畸形dex>` | 1；stderr 诊断；无部分记录行输出 |
 | E9 ZIP 魔数直喂 | `main.exe <apk>`（无 --entry） | 1；MultiDexNotMerged 诊断 |
-| E10 CRC 损坏（待建） | `main.exe <损坏apk> --entry classes.dex` | 1；**写盘/输出前整体拒绝**（T-W3-3） |
+| E10 CRC 损坏 | `main.exe <损坏apk> --entry classes.dex` | 1；**写盘/输出前整体拒绝**（T-W3-3 已建） |
 | E11 不存在文件 | `main.exe <缺失路径>` | 1；诊断不 panic |
 
 记录行/JSON 契约冻结口径：HDR|/STR|/CLZ|/CLSM|/FLD|/MTH|/ANN|/SVC|/OPS|/XREF|/MREF|/DEX| 前缀与字段序冻结，变更即破坏（A5）；退出码矩阵 0=成功/1=解析或 IO 失败/2=参数误用逐例断言。W4–W8 新视图如需 CLI 暴露，只允许新增记录行前缀/JSON 字段的加法，另行登记黄金。
@@ -168,9 +168,9 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 ## 8. L5 元契约门禁
 
 1. 快照门禁：`moon info` + `git diff --exit-code -- pkg.generated.mbti cmd/main/pkg.generated.mbti`（纯加法；ci.yml Gate5 已挂，错误文案 W1 修正指向 docs/CHANGELOG.md）。
-2. 双目标等价：同 fixture wasm/native 值输出逐字节 diff=0（现状双目标 moon test 绿；逐字节 parity 脚本待建，W2 SHA-1 合入时为强制项 T-W2-6）。
+2. 双目标等价：同 fixture wasm/native 值输出逐字节 diff=0（现状双目标 moon test 绿；W2 SHA-1 已合入，双目标 parity 已在 W2 落地，逐字节 parity 脚本仍待建，L5 增强）。
 3. 错误簿记门禁：§6.2 与测试代码双向核对（grep 变体名 ↔ 表格行），缺一即红。
-4. 变异自检：注入 3 类缺陷——跳过 adler32 校验 / 放行未定义 opcode / 篡改 diff 分段复位——套件必须变红后还原复绿（对应 A2/A4/A1 各一；W2 合入后追加「跳过 SHA-1 比对」第四注入点）。
+4. 变异自检：注入 3 类缺陷——跳过 adler32 校验 / 放行未定义 opcode / 篡改 diff 分段复位——套件必须变红后还原复绿（对应 A2/A4/A1 各一；W2 合入后追加「跳过 SHA-1 比对」第四注入点，已随 W2 落地）。
 5. 计数纪律：#skip 不计通过（§6.4）；测试过滤串以 `*` 结尾防空转假绿；bench 行数下限断言防「输出为空也算快」。
 6. 引用实存性扫描（W1 新增，T-W1-1）：注释/帮助文本/CI 文案引用的仓库内路径全部实存；README API 索引与快照逐条一致（T-W1-3）。
 
@@ -196,9 +196,9 @@ pwsh -File tools/bench-dex.ps1   # 可选第六道（需 python + native release
 
 落地验收（逐层勾选；未裁决工作包对应行保持「未实现」，不得预写通过）：
 
-- [ ] W1：T-W1-1 引用实存性扫描绿 / T-W1-2 五门禁+快照 diff=0 / T-W1-3 README 索引一致
-- [ ] W2：T-W2-1, T-W2-2, T-W2-3, T-W2-4, T-W2-5, T-W2-6（含防火墙恒等式 I1 与双目标 parity）
-- [ ] W3：T-W3-1, T-W3-2, T-W3-3, T-W3-4, T-W3-5（含 E10 写盘前整体拒绝）
+- [x] W1：T-W1-1 引用实存性扫描绿 / T-W1-2 五门禁+快照 diff=0 / T-W1-3 README 索引一致（2026-11-19 落地，提交 af7ae62）
+- [x] W2：T-W2-1, T-W2-2, T-W2-3, T-W2-4, T-W2-5, T-W2-6（含防火墙恒等式 I1 与双目标 parity，2026-11-19 落地，提交 1225082）
+- [x] W3：T-W3-1, T-W3-2, T-W3-3, T-W3-4, T-W3-5（含 E10 写盘前整体拒绝，2026-11-19 落地，提交 f410513）
 - [ ] W4：T-W4-1, T-W4-2, T-W4-3, T-W4-4, T-W4-5（map 黄金 + 截断扫描 + 快照纯加法）
 - [ ] W5：T-W5-1, T-W5-2, T-W5-3, T-W5-4, T-W5-5, T-W5-6, T-W5-7（dexdump -d 差分 + 状态机边界 + I6）
 - [ ] W6：T-W6-1, T-W6-2, T-W6-3, T-W6-4（width 全矩阵 + I7）

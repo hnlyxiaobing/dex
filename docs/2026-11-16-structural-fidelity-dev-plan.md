@@ -1,9 +1,9 @@
 # dex 结构忠实与可信缺口开发文档
 
-> 建立：2026-11-16 ｜ 状态：待开发 ｜ 适用仓库：本仓库（独立自包含）
+> 建立：2026-11-16 ｜ 状态：W1/W2/W3 已交付（2026-11-19）｜ 适用仓库：本仓库（独立自包含）
 > 配套文档：[2026-11-16-test-system-design.md](2026-11-16-test-system-design.md)（验收测试 ID `T-W*-*` 出自该文档）
 > 本文所有「现状」结论均为 2026-11-16 对本仓库源码的实测核对，非转述历史文档。
-> 五门禁当日实测：`moon check --deny-warn` ✓ / `moon build` ✓ / `moon test` 96/96 ✓（99 条声明 − 3 条 `#skip`）/ `moon fmt --check` ✓ / `moon info` + `git diff --exit-code` 零差异 ✓。
+> 五门禁当日实测：`moon check --deny-warn` ✓ / `moon build` ✓ / `moon test` 96/96 ✓（99 条声明 − 3 条 `#skip`）/ `moon fmt --check` ✓ / `moon info` + `git diff --exit-code` 零差异 ✓。W1/W2/W3 落地后（2026-11-19）`moon test` 为 109/109（另 3 条 `#skip`）。
 
 ## 0. 现状基线（实测核对，开发前必读）
 
@@ -25,7 +25,7 @@
 | B12 | class_def access_flags 以原始值输出，**hiddenapi 位未解码**（灰区，见 §9） | parse.mbt class_def 解析；render.mbt CLZ 记录行 |
 | B13 | AnnotationsIndex 一次 read_ctx + O(1) 逐类查询；合成 4000 类 DEX 上旧逐类重建实现约 17s → 修复后约 0.06s；bench 阈值 summary<5000ms / norm<10000ms | annot.mbt；tools/bench-dex.ps1 L9–12、L56–59 |
 | B14 | CLI 契约：退出码 0/1/2；记录行 HDR\|/STR\|/CLZ\|/CLSM\|/FLD\|/MTH\|/ANN\|/SVC\|/OPS\|/XREF\|/MREF\|/DEX\|；`--view summary|norm|xref`、`--json`、`--entry`（仅 APK 有效否则 2）、`--method` | cmd/main/main.mbt、render.mbt 全文 |
-| B15 | zipmin 宽松 ZIP 读取器：容忍 aapt2 对齐裸填充 extra；Store/Deflate；**不做 CRC-32、不支持 ZIP64**（明示）；inflate_exact 带 max_output 上界（usize 否则 1GiB） | cmd/main/zipmin.mbt 头注释与实现 |
+| B15 | zipmin 宽松 ZIP 读取器：容忍 aapt2 对齐裸填充 extra；Store/Deflate；**CRC-32 校验已实现（W3，IEEE 802.3 自研查表），ZIP64 仍不支持**（csize/usize `0xFFFFFFFF`、EOCD 计数 `0xFFFF` 显式拒绝）；inflate_exact 带 max_output 上界（usize 否则 1GiB） | cmd/main/zipmin.mbt 头注释与实现 |
 | B16 | 3 条 `#skip` 显式存在：phone-1.6.0 第三方样本未提取、L3 真机差分、DEX 无 chunk 概念对应用例；99 条 test 声明 − 3 = 96 执行，与 moon test 实测一致 | fixtures_test.mbt / fixtures_malformed_test.mbt `#skip`；2026-11-16 实测 |
 | B17 | 零第三方依赖：库仅 moonbitlang/core；CLI 另用 core/compress/flate（core 内包，非第三方）；CI 钉死 moon 0.1.20261104 / moonc v0.10.20+65efd5b93 / core 0.10.20+65efd5b93，版本断言 fail-closed | moon.mod；cmd/main/moon.pkg；.github/workflows/ci.yml |
 | B18 | 公开 API 面含 `pub type MethodHandle = Int32` 与 `pub trait Disassembler { fn disasm(Self, Int32) -> String raise DexError }`；XrefIndex/AnnotationsIndex 为不透明 pub struct | pkg.generated.mbti（343 行，git 跟踪在列） |
