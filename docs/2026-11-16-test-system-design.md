@@ -2,7 +2,7 @@
 
 > 建立：2026-11-16 ｜ 状态：设计生效，随开发文档逐包落地 ｜ 适用仓库：本仓库（独立自包含）
 > 配套文档：[2026-11-16-structural-fidelity-dev-plan.md](2026-11-16-structural-fidelity-dev-plan.md)（`T-W*-*` 验收 ID 一一对应；B# 证据行出自该文档 §0）
-> 现状基线：2026-11-16 五门禁实测全绿，`moon test` 96/96（99 条声明 − 3 条 `#skip`，见 §6.4）。W1/W2/W3 落地后（2026-11-19）`moon test` 为 109/109（另 3 条 `#skip`）。W4 落地后（2026-11-19）`moon test` 为 114/114（另 3 条 `#skip`）。
+> 现状基线：2026-11-16 五门禁实测全绿，`moon test` 96/96（99 条声明 − 3 条 `#skip`，见 §6.4）。W1/W2/W3 落地后（2026-11-19）`moon test` 为 109/109（另 3 条 `#skip`）。W4 落地后（2026-11-19）`moon test` 为 115/115（另 3 条 `#skip`）。W6 落地后（2026-11-19）`moon test` 为 125/125（另 3 条 `#skip`）。
 
 ## 1. 第一性原理：本库的正确性是什么
 
@@ -87,7 +87,7 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 | F1 | header 校验（035–041/adler32/endian） | ✓ | ✓ | ✓ | ✓ | ✓ | B1 已实现 | SHA-1 值化→W2 |
 | F2 | 六表解析 + MUTF-8 | ✓ | ✓ | ✓ | ✓ | ✓ | B1 已实现 | 无 |
 | F3 | class_data diff 分段复位 | ✓ | ✓ | ✓ | ✓ | ✓ | B6 已修复+回归 | 无 |
-| F4 | 指令解码（224 opcode + payload） | ✓ | ✓ | ✓ | ✓ | ✓ | B3/B10 已实现 | array 元素视图→W6 |
+| F4 | 指令解码（224 opcode + payload） | ✓ | ✓ | ✓ | ✓ | ✓ | B3/B10 已实现 | array 元素视图 `array_payload_view`→W6（2026-11-19 落地） |
 | F5 | 反汇编渲染（norm 黄金） | ✓ | ✓ | ✓ | ✓ | ✓ | B14 已实现 | 无 |
 | F6 | xref（9 kind/冻结排序） | ✓ | ✓ | ✓ | ✓ | ✓ | B4 盲区 0xFA–0xFD | 扩展索引→W7（须裁决） |
 | F7 | encoded_value 18 变体 | ✓ | ✓ | ✓ | ✓ | ✓ | B5 已实现 | 无 |
@@ -120,7 +120,7 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 | BadTableOffset(TableKind,Int32) | dex_sem_annotations_test.mbt L1064–1077（坏 visibility/保留 value_type）；invoke 路径 res0 非 0；W4 unused 非 0 已建（maplist_test.mbt，MapList） | W5 保留 opcode 0x0B |
 | InvalidIndex(TableKind,Int32) | dex_test.mbt L509–525（越界 handle）；dex_sem_annotations_test.mbt L1092–1099（class_index 越界） | W5 名字/类型索引越界 |
 | InvalidInstruction(Int32,Int32) | dex_test.mbt L725–740（0x3E）；fixtures_malformed_test.mbt L174–187 | 无（0xFA–0xFF 已转正，B3） |
-| BadCodeItem(Int32,String) | dex_test.mbt L744–752（code_item 越界）；payload 截断/溢出路径 | W6 元素视图；W8 handler 越界 |
+| BadCodeItem(Int32,String) | dex_test.mbt L744–752（code_item 越界）；payload 截断/溢出路径；W6 元素视图四错误路径已建（payloadview_test.mbt：ident 非 0x0300 / size 溢出 / width=0 / 截断） | W8 handler 越界 |
 | BadDebugInfo(Int32,String) | dex_test.mbt L781–796（debug 流截断） | W5 保留 opcode 0x0B/坏 uleb |
 | MultiDexNotMerged(String) | dex_test.mbt L660–683（ZIP 魔数/尾随拼接） | 无（W10 裁决前口径冻结） |
 
@@ -199,9 +199,9 @@ pwsh -File tools/bench-dex.ps1   # 可选第六道（需 python + native release
 - [x] W1：T-W1-1 引用实存性扫描绿 / T-W1-2 五门禁+快照 diff=0 / T-W1-3 README 索引一致（2026-11-19 落地，提交 af7ae62）
 - [x] W2：T-W2-1, T-W2-2, T-W2-3, T-W2-4, T-W2-5, T-W2-6（含防火墙恒等式 I1 与双目标 parity，2026-11-19 落地，提交 1225082）
 - [x] W3：T-W3-1, T-W3-2, T-W3-3, T-W3-4, T-W3-5（含 E10 写盘前整体拒绝，2026-11-19 落地，提交 f410513）
-- [x] W4：T-W4-1, T-W4-2, T-W4-3, T-W4-4, T-W4-5（map 黄金 + 0x0007/0x0008 原样 + 三错误路径 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 e9841e5）
+- [x] W4：T-W4-1, T-W4-2, T-W4-3, T-W4-4, T-W4-5（map 黄金 + 0x0007/0x0008 原样 + 三错误路径 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 b3a4110）
 - [ ] W5：T-W5-1, T-W5-2, T-W5-3, T-W5-4, T-W5-5, T-W5-6, T-W5-7（dexdump -d 差分 + 状态机边界 + I6）
-- [ ] W6：T-W6-1, T-W6-2, T-W6-3, T-W6-4（width 全矩阵 + I7）
+- [x] W6：T-W6-1, T-W6-2, T-W6-3, T-W6-4（width 1/2/4/8 全矩阵 + 奇数 pad 恒等式 + 四错误路径 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 76ecf73）
 - [ ] W7（须裁决，裁决前保持未实现）：T-W7-1, T-W7-2, T-W7-3, T-W7-4, T-W7-5（含防火墙 I3）
 - [ ] W8：T-W8-1, T-W8-2, T-W8-3, T-W8-4（含 I5）
 - [ ] W9（须裁决）：T-W9-1, T-W9-2 按裁决选项执行

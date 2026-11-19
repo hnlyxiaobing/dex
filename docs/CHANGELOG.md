@@ -15,10 +15,28 @@
 - 错误映射（复用既有 9 变体，文档注明）：输入 < 0x70 字节 / `map_off` 越界 / count 截断 →
   `UnexpectedEof`（与 parse.mbt 既有口径一致）；`unused` 非 0 / size 为负 / offset 越界 →
   `BadTableOffset(MapList, …)`。`map_off = 0` 返回空数组（map_list 可选）。
-- 新增 6 个测试（109 → 114）：T-W4-1 黄金逐项一致（含 0x0007/0x0008 type 原样保留）、
+- 新增 6 个测试（109 → 115）：T-W4-1 黄金逐项一致（含 0x0007/0x0008 type 原样保留）、
   T-W4-4 map_off=0 → 空数组、T-W4-3 三错误路径（map_off 越界 / count 截断 / unused 非 0）、
   DoD 全前缀截断扫描无 panic（该扫描**实测捕获**并修复了短输入读越界 panic）。
-- 五门禁全绿；3 个既有 `#skip` 保持原样。
+- 五门禁全绿（`moon test` 115/115）；3 个既有 `#skip` 保持原样。
+
+## 2026-11-19 · W6：fill-array-data 元素展开视图（新增公开 API）
+
+- 新增 `payloadview.mbt`：补齐 B10 剩余缺口——fill-array-data-payload 数据元素结构化切片。
+  布局 `u16 ident(0x0300)｜u16 element_width｜u32 size｜size*width 字节数据`（AOSP dex-format）。
+  坐标与 `decode_payload` 同系（`foff = code_off + 16 + u*2`，`u` 为 payload 相对 insns 区
+  的 code unit 偏移）。不改 `decode_payload` 既有 operands 渲染口径（norm 黄金不动，P5）。
+- **公开 API（纯加法）**：`pub(all) struct ArrayPayloadView { element_width : Int32;
+  elements : Array[Bytes] }` 与 `pub fn array_payload_view(Bytes, Int32, Int32) ->
+  ArrayPayloadView raise DexError`。`pkg.generated.mbti` **+2 处（1 fn + 1 struct），0 删改**。
+- elements 为原始小端字节切片，不做端序转换（A1 寻址忠实）；奇数总字节对齐 pad 字节不产生
+  元素（Σ 元素宽 == size*width 恒等式）。
+- 错误映射（复用 BadCodeItem）：非 0x0300 ident / size 溢出（同 decode_payload 口径）/
+  width=0 且 size>0 / 数据区截断 → `BadCodeItem(code_off, …)`，无 panic。
+- 新增 10 个测试（115 → 125）：T-W6-1 width 1/2/4/8 元素切片黄金、T-W6-2 奇数 pad +
+  视图长度恒等式、T-W6-3 size 溢出/ident 非 0x0300/width=0/截断四错误路径、DoD 全前缀
+  截断扫描无 panic。
+- 五门禁全绿（`moon test` 125/125）；3 个既有 `#skip` 保持原样。
 
 ## 2026-11-19 · W3：zipmin 条目 CRC-32 校验 + CLI 收集 fail-closed
 
