@@ -19,8 +19,15 @@ repository = "https://github.com/hnlyxiaobing/dex"
 
 license = "Apache-2.0"
 
-keywords = [ ]
+keywords = [
+  "dex",
+  "android",
+  "parser",
+  "disassembly",
+  "smali",
+  "reverse-engineering",
+]
 
 preferred_target = "wasm"
 
-description = ""
+description = "把 DEX 字节解析成六表结构、指令序列、注解与交叉引用，输出可读清单与 smali 风格反汇编。"
