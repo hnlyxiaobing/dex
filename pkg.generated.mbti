@@ -16,6 +16,8 @@ pub fn array_payload_view(Bytes, Int32, Int32) -> ArrayPayloadView raise DexErro
 
 pub fn build_xref(DexFile) -> XrefIndex raise DexError
 
+pub fn build_xref_ext(DexFile) -> XrefIndexExt raise DexError
+
 pub fn call_site_name(DexFile, Int32) -> String raise DexError
 
 pub fn call_site_ref_name(Bytes, Int32) -> String raise DexError
@@ -338,6 +340,15 @@ pub fn XrefIndex::method_sites(Self, Int32) -> Array[XrefSite] raise DexError
 pub fn XrefIndex::sites(Self) -> Array[XrefSite]
 pub fn XrefIndex::sites_in(Self, Int32) -> Array[XrefSite] raise DexError
 
+pub struct XrefIndexExt {
+  all_sites : Array[XrefSiteExt]
+  method_count : Int32
+  call_site_count : Int32
+}
+pub fn XrefIndexExt::callees(Self, Int32) -> Array[XrefSiteExt] raise DexError
+pub fn XrefIndexExt::callers(Self, Int32) -> Array[XrefSiteExt] raise DexError
+pub fn XrefIndexExt::sites(Self) -> Array[XrefSiteExt]
+
 pub(all) enum XrefKind {
   XrefCallVirtual
   XrefCallSuper
@@ -350,11 +361,25 @@ pub(all) enum XrefKind {
   XrefFieldWriteInstance
 }
 
+pub(all) enum XrefKindExt {
+  XrefExtInvokePolymorphic
+  XrefExtInvokePolymorphicRange
+  XrefExtInvokeCustom
+  XrefExtInvokeCustomRange
+}
+
 pub(all) struct XrefSite {
   method_ref : Int32
   offset : Int32
   target_ref : Int32
   kind : XrefKind
+}
+
+pub(all) struct XrefSiteExt {
+  method_ref : Int32
+  offset : Int32
+  target_ref : Int32
+  kind : XrefKindExt
 }
 
 // Type aliases

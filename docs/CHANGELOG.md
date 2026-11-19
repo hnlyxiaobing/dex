@@ -3,6 +3,24 @@
 > 本文件登记影响公开面 / 行为 / 证据链的变更。加法性 API 变更必须在此留一条，且与
 > `pkg.generated.mbti` 快照在同一次提交。条目按时间倒序。
 
+## 2026-11-19 · W7：xref 扩展索引覆盖 0xFA–0xFD（新增公开 API，选项 A）
+
+- 新增 `xref_ext.mbt`：补齐 B4 调用图盲区——invoke-polymorphic{,/range}（0xFA/0xFB）
+  与 invoke-custom{,/range}（0xFC/0xFD）四指令的调用 site。不改 `build_xref` 输出
+  （P5 防火墙律），新建独立的 `XrefIndexExt` / `XrefSiteExt` / `XrefKindExt` 类型族。
+- **公开 API（纯加法）**：`pub fn build_xref_ext(DexFile) -> XrefIndexExt raise DexError`、
+  `pub enum XrefKindExt{4 变体}`、`pub struct XrefSiteExt{method_ref/offset/target_ref/kind}`、
+  `pub struct XrefIndexExt` + 三个查询方法 `sites`/`callees`/`callers`。
+  `pkg.generated.mbti` **+12 处（1 fn + 1 enum + 2 struct + 3 方法 + 5 字段），0 删改**。
+- target_ref 口径：0xFA/0xFB → method_idx（IndexMethod）；0xFC/0xFD → call_site_idx
+  （IndexCallSite）。0xFE/0xFF const 族不产 site。
+- 排序契约与 `build_xref` 同构（method_ref 升序 × offset 升序）。`callers`/`callees`
+  双向查询一致。
+- 新增 6 个测试（130 → 136）：T-W7-1 fx-dyn site 黄金 + 排序契约、T-W7-1 target_ref
+  域校验、T-W7-2 P5 防火墙（build_xref 输出不变）、T-W7-3 0xFE/0xFF 不产 site、
+  T-W7-4 callers/callees 双向一致、DoD 越界抛 InvalidIndex。
+- 五门禁全绿（`moon test` 136/136）；3 个既有 `#skip` 保持原样。
+
 ## 2026-11-19 · W10：Multi-DEX 归属声明强化（选项 A，零 API）
 
 - 裁决：Multi-DEX 合并属跨文件信息，非 DEX 格式规范（§9 判据界外），选项 A 通过——
