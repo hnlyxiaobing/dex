@@ -1,9 +1,9 @@
 # dex 结构忠实与可信缺口开发文档
 
-> 建立：2026-11-16 ｜ 状态：W1/W2/W3 已交付（2026-11-19）｜ 适用仓库：本仓库（独立自包含）
+> 建立：2026-11-16 ｜ 状态：W1/W2/W3/W4 已交付（W4：2026-11-19）｜ 适用仓库：本仓库（独立自包含）
 > 配套文档：[2026-11-16-test-system-design.md](2026-11-16-test-system-design.md)（验收测试 ID `T-W*-*` 出自该文档）
 > 本文所有「现状」结论均为 2026-11-16 对本仓库源码的实测核对，非转述历史文档。
-> 五门禁当日实测：`moon check --deny-warn` ✓ / `moon build` ✓ / `moon test` 96/96 ✓（99 条声明 − 3 条 `#skip`）/ `moon fmt --check` ✓ / `moon info` + `git diff --exit-code` 零差异 ✓。W1/W2/W3 落地后（2026-11-19）`moon test` 为 109/109（另 3 条 `#skip`）。
+> 五门禁当日实测：`moon check --deny-warn` ✓ / `moon build` ✓ / `moon test` 96/96 ✓（99 条声明 − 3 条 `#skip`）/ `moon fmt --check` ✓ / `moon info` + `git diff --exit-code` 零差异 ✓。W1/W2/W3 落地后（2026-11-19）`moon test` 为 109/109（另 3 条 `#skip`）。W4 落地后（2026-11-19）`moon test` 为 114/114（另 3 条 `#skip`）。
 
 ## 0. 现状基线（实测核对，开发前必读）
 

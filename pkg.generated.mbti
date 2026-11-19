@@ -32,6 +32,8 @@ pub fn instruction_operands(Instruction) -> InsnOperands raise DexError
 
 pub fn instruction_ref_name(DexFile, Instruction) -> String? raise DexError
 
+pub fn map_items(Bytes) -> Array[MapItem] raise DexError
+
 pub fn method_handle_name(DexFile, Int32) -> String raise DexError
 
 pub fn method_handle_ref_name(Bytes, Int32) -> String raise DexError
@@ -237,6 +239,12 @@ pub(all) struct Instruction {
   mnemonic : String
   operands : Array[String]
   raw : Bytes
+}
+
+pub(all) struct MapItem {
+  type_code : Int32
+  size : Int32
+  offset : Int32
 }
 
 pub(all) struct MethodAnnotations {

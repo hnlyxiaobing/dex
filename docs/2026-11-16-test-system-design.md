@@ -2,7 +2,7 @@
 
 > 建立：2026-11-16 ｜ 状态：设计生效，随开发文档逐包落地 ｜ 适用仓库：本仓库（独立自包含）
 > 配套文档：[2026-11-16-structural-fidelity-dev-plan.md](2026-11-16-structural-fidelity-dev-plan.md)（`T-W*-*` 验收 ID 一一对应；B# 证据行出自该文档 §0）
-> 现状基线：2026-11-16 五门禁实测全绿，`moon test` 96/96（99 条声明 − 3 条 `#skip`，见 §6.4）。W1/W2/W3 落地后（2026-11-19）`moon test` 为 109/109（另 3 条 `#skip`）。
+> 现状基线：2026-11-16 五门禁实测全绿，`moon test` 96/96（99 条声明 − 3 条 `#skip`，见 §6.4）。W1/W2/W3 落地后（2026-11-19）`moon test` 为 109/109（另 3 条 `#skip`）。W4 落地后（2026-11-19）`moon test` 为 114/114（另 3 条 `#skip`）。
 
 ## 1. 第一性原理：本库的正确性是什么
 
@@ -94,7 +94,7 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 | F8 | 注解四类 + O(1) 批量索引 | ✓ | ✓ | ✓ | ✓ | ✓ | B13 已实现+bench | 无 |
 | F9 | MethodHandle/call_site | ✓ | ✓ | ✓ | ✓ | ✓ | B9 已实现 | 无 |
 | F10 | debug_info / try-catch | ✓ | ✓ | ✓ | 部分 | ✓ | B7/B8 仅长度校验+raw | 状态机→W5；多类型→W8 |
-| F11 | map_list | ✓ | ✓ | ✓ | ✓ | ✓ | B9 仅 raw | 结构化视图→W4 |
+| F11 | map_list | ✓ | ✓ | ✓ | ✓ | ✓ | B9 仅 raw | 结构化视图 `map_items`→W4（2026-11-19 落地） |
 | F12 | 值化错误体系（9 变体） | ✓ | ✓ | — | — | ✓ | B11；簿记 9/9（§6.2） | 新路径复用变体须补簿记 |
 | F13 | CLI 三视图/JSON/退出码 | ✓ | ✓ | ✓ | ✓ | ✓ | B14 已实现 | CRC 拒绝场景已落地（W3，T-W3-3） |
 | F14 | wasm/native 双目标 | ✓ | — | — | — | — | 双目标 moon test 绿；逐字节差分待建 | parity 脚本→L5 |
@@ -114,10 +114,10 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 
 | 变体 | 触发 fixture（现状，显式断言变体名） | 新增触发（待建） |
 |---|---|---|
-| UnexpectedEof(Int32) | dex_test.mbt L640–656（截断输入/file_size 不符）；fixtures_malformed_test.mbt L157（map_off 越界）；W2 len<32 已建 | W4 map 截断 |
+| UnexpectedEof(Int32) | dex_test.mbt L640–656（截断输入/file_size 不符）；fixtures_malformed_test.mbt L157（map_off 越界）；W2 len<32 已建；W4 map 截断/map_off 越界/短输入已建（maplist_test.mbt） | W5 debug 截断 |
 | BadMagic(String) | dex_test.mbt L593–604（坏 magic）；L608–623（checksum mismatch 复用口径钉死） | 无（语义 quirk 冻结） |
 | UnsupportedVersion(String) | dex_test.mbt L625–636（版本不在 035–041） | 无 |
-| BadTableOffset(TableKind,Int32) | dex_sem_annotations_test.mbt L1064–1077（坏 visibility/保留 value_type）；invoke 路径 res0 非 0 | W4 map 越界映射约定 |
+| BadTableOffset(TableKind,Int32) | dex_sem_annotations_test.mbt L1064–1077（坏 visibility/保留 value_type）；invoke 路径 res0 非 0；W4 unused 非 0 已建（maplist_test.mbt，MapList） | W5 保留 opcode 0x0B |
 | InvalidIndex(TableKind,Int32) | dex_test.mbt L509–525（越界 handle）；dex_sem_annotations_test.mbt L1092–1099（class_index 越界） | W5 名字/类型索引越界 |
 | InvalidInstruction(Int32,Int32) | dex_test.mbt L725–740（0x3E）；fixtures_malformed_test.mbt L174–187 | 无（0xFA–0xFF 已转正，B3） |
 | BadCodeItem(Int32,String) | dex_test.mbt L744–752（code_item 越界）；payload 截断/溢出路径 | W6 元素视图；W8 handler 越界 |
@@ -199,7 +199,7 @@ pwsh -File tools/bench-dex.ps1   # 可选第六道（需 python + native release
 - [x] W1：T-W1-1 引用实存性扫描绿 / T-W1-2 五门禁+快照 diff=0 / T-W1-3 README 索引一致（2026-11-19 落地，提交 af7ae62）
 - [x] W2：T-W2-1, T-W2-2, T-W2-3, T-W2-4, T-W2-5, T-W2-6（含防火墙恒等式 I1 与双目标 parity，2026-11-19 落地，提交 1225082）
 - [x] W3：T-W3-1, T-W3-2, T-W3-3, T-W3-4, T-W3-5（含 E10 写盘前整体拒绝，2026-11-19 落地，提交 f410513）
-- [ ] W4：T-W4-1, T-W4-2, T-W4-3, T-W4-4, T-W4-5（map 黄金 + 截断扫描 + 快照纯加法）
+- [x] W4：T-W4-1, T-W4-2, T-W4-3, T-W4-4, T-W4-5（map 黄金 + 0x0007/0x0008 原样 + 三错误路径 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 e9841e5）
 - [ ] W5：T-W5-1, T-W5-2, T-W5-3, T-W5-4, T-W5-5, T-W5-6, T-W5-7（dexdump -d 差分 + 状态机边界 + I6）
 - [ ] W6：T-W6-1, T-W6-2, T-W6-3, T-W6-4（width 全矩阵 + I7）
 - [ ] W7（须裁决，裁决前保持未实现）：T-W7-1, T-W7-2, T-W7-3, T-W7-4, T-W7-5（含防火墙 I3）

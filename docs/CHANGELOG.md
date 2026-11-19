@@ -3,6 +3,23 @@
 > 本文件登记影响公开面 / 行为 / 证据链的变更。加法性 API 变更必须在此留一条，且与
 > `pkg.generated.mbti` 快照在同一次提交。条目按时间倒序。
 
+## 2026-11-19 · W4：map_list 结构化视图（新增公开 API）
+
+- 新增 `maplist.mbt`：把 map_list 从原始字节（`parse_dex.map_list`）升级为逐项 `MapItem`
+  视图，不改既有 raw API 语义（P4/P5 防火墙律）。map_item 布局 `u16 type_code｜u16 unused｜
+  u32 size｜u32 offset`（AOSP dex-format，12 字节/项）。
+- **公开 API（纯加法）**：`pub(all) struct MapItem { type_code : Int32; size : Int32;
+  offset : Int32 }` 与 `pub fn map_items(Bytes) -> Array[MapItem] raise DexError`。
+  `pkg.generated.mbti` **+2 处（1 fn + 1 struct），0 删改**。type_code 保留原始 u16 值
+  （0x0000 header … 0x0008 method_handle），不塞入冻结枚举 `TableKind`。
+- 错误映射（复用既有 9 变体，文档注明）：输入 < 0x70 字节 / `map_off` 越界 / count 截断 →
+  `UnexpectedEof`（与 parse.mbt 既有口径一致）；`unused` 非 0 / size 为负 / offset 越界 →
+  `BadTableOffset(MapList, …)`。`map_off = 0` 返回空数组（map_list 可选）。
+- 新增 6 个测试（109 → 114）：T-W4-1 黄金逐项一致（含 0x0007/0x0008 type 原样保留）、
+  T-W4-4 map_off=0 → 空数组、T-W4-3 三错误路径（map_off 越界 / count 截断 / unused 非 0）、
+  DoD 全前缀截断扫描无 panic（该扫描**实测捕获**并修复了短输入读越界 panic）。
+- 五门禁全绿；3 个既有 `#skip` 保持原样。
+
 ## 2026-11-19 · W3：zipmin 条目 CRC-32 校验 + CLI 收集 fail-closed
 
 - `cmd/main/zipmin.mbt`：新增私有 table-driven CRC-32（IEEE 802.3，反射多项式 `0xEDB88320`，
