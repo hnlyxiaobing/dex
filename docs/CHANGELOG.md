@@ -3,6 +3,15 @@
 > 本文件登记影响公开面 / 行为 / 证据链的变更。加法性 API 变更必须在此留一条，且与
 > `pkg.generated.mbti` 快照在同一次提交。条目按时间倒序。
 
+## 2026-11-19 · W10：Multi-DEX 归属声明强化（选项 A，零 API）
+
+- 裁决：Multi-DEX 合并属跨文件信息，非 DEX 格式规范（§9 判据界外），选项 A 通过——
+  README 非目标节新增明确声明："不实施 Multi-DEX 合并。DexFile 是单 DEX 文件的完整、
+  自洽解析单元，索引空间封闭于自身。MultiDexNotMerged 显式拒绝多 dex 拼接/容器输入。
+  跨 DEX 编排属下游工具职责，本库仅保证单 DEX 结构事实忠实可依赖。"
+- 零公开 API 变更，`pkg.generated.mbti` 无 diff。既有 `MultiDexNotMerged` 触发口径不变；
+  T-W10-1 防火墙——`error: multi-dex / container input` 两用例保持绿（130/130 全绿）。
+
 ## 2026-11-19 · W9：hiddenapi 文档声明（选项 A，零 API）
 
 - 裁决：hiddenapi 位（access_flags 高 16 位）属 ART 内部约定，非 DEX 格式规范（§9 判据界外），

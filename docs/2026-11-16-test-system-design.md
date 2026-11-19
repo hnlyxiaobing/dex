@@ -205,5 +205,5 @@ pwsh -File tools/bench-dex.ps1   # 可选第六道（需 python + native release
 - [ ] W7（须裁决，裁决前保持未实现）：T-W7-1, T-W7-2, T-W7-3, T-W7-4, T-W7-5（含防火墙 I3）
 - [x] W8：T-W8-1, T-W8-2, T-W8-3, T-W8-4（多类型 handler 全量展开 + catch-all Some/None + I5 恒等式 + P5 防火墙 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 c170174）
 - [x] W9（选项 A 裁决，零 API）：T-W9-1（README 非目标节 hiddenapi 声明已落地，§9 判据 "界外" 与 B12 灰区记录一致，2026-11-19 落地，提交待哈希）
-- [ ] W10（须裁决）：T-W10-1 维持 MultiDexNotMerged 口径
+- [x] W10（选项 A 裁决，零 API）：T-W10-1（✅ 既有 `error: multi-dex/container input` 两用例保持绿；README 归属声明已强化，MultiDexNotMerged 口径不变，2026-11-19 落地，提交待哈希）
 - [ ] L5 增强：parity 脚本 / 随机变异 runner / 变异自检四注入点（随 W2 起逐步强制）

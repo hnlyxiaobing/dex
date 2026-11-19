@@ -22,6 +22,7 @@
 - 不覆盖反射、MethodHandle 运行时目标、JNI RegisterNatives、动态代理与运行时织入
 - 不 import 任何其他工作区模块
 - **access_flags 以原始 `Int32` 输出**；高 16 位含 ART hiddenapi 内部标记（blocked/greylist/max-target-* 等），这些位**不属于 DEX 格式规范**而是 Android 运行时在构建过程注入的约定——本库不解释、不映射、不声明枚举
+- **不实施 Multi-DEX 合并**：`DexFile` 是单 DEX 文件的完整、自洽解析单元，索引空间封闭于自身。`MultiDexNotMerged` 显式拒绝多 dex 拼接/容器输入。跨 DEX 编排（合并、去重、索引重映射）属下游工具职责，本库仅保证单 DEX 结构事实忠实可依赖
 
 ## 2. 关键设计决策（本仓库自足记录）
 
