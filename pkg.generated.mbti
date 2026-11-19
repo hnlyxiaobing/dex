@@ -48,6 +48,8 @@ pub fn proto_name(DexFile, Int32) -> String raise DexError
 
 pub fn resolve_ref_name(DexFile, IndexKind, Int32) -> String raise DexError
 
+pub fn signature_ok(Bytes) -> Bool raise DexError
+
 pub fn static_values(Bytes, Int32) -> Array[EncodedValue] raise DexError
 
 pub fn string_ref_name(DexFile, Int32) -> String raise DexError

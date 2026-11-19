@@ -1,7 +1,7 @@
 # dex · DEX 解析与反汇编
 
 > 独立发布单元 ｜ L1 逆向输入 ｜ `preferred_target = wasm` ｜ Apache-2.0
-> 状态：`moon test` **96/96** 通过（2026-11-19 本机复验，另有 3 个 `#skip` 用例不计入）；本文件是本仓库**唯一**说明文档。
+> 状态：`moon test` **102/102** 通过（2026-11-19 本机复验，另有 3 个 `#skip` 用例不计入）；本文件是本仓库**唯一**说明文档。
 > 公开 API 以 `pkg.generated.mbti` 为准（由 `moon info` 生成，禁手工编辑）；加法性变更须登记簿记 + 快照审阅 + 快照门禁。
 
 ## 1. 定位与边界
@@ -53,6 +53,7 @@ pub fn method_ref_of(DexFile, MethodDef) -> Int32?
 pub fn parse(Bytes) -> DexFile raise DexError
 pub fn proto_name(DexFile, Int32) -> String raise DexError
 pub fn resolve_ref_name(DexFile, IndexKind, Int32) -> String raise DexError
+pub fn signature_ok(Bytes) -> Bool raise DexError
 pub fn static_values(Bytes, Int32) -> Array[EncodedValue] raise DexError
 pub fn string_ref_name(DexFile, Int32) -> String raise DexError
 pub fn type_ref_name(DexFile, Int32) -> String raise DexError

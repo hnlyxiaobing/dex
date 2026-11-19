@@ -579,3 +579,144 @@ test "golden dex xref fx-multidex2" {
     msg="fx-multidex classes2.dex xref 解析输出 == dexdump 抽取黄金",
   )
 }
+
+///|
+/// W2 辅助：n 个 0x00 字节。
+fn w2_zeros(n : Int32) -> Bytes {
+  let out : Array[Byte] = []
+  for _ in 0..<n {
+    out.push(b'\x00')
+  }
+  Bytes::from_array(out)
+}
+
+///|
+/// W2 辅助：32 字节伪 header（[0..12) 置零、[12..32) 放摘要）+ 消息体。
+fn w2_header_with_digest(digest : Bytes, msg : Bytes) -> Bytes {
+  let out : Array[Byte] = []
+  for _ in 0..<12 {
+    out.push(b'\x00')
+  }
+  for i in 0..<20 {
+    out.push(digest[i])
+  }
+  for i in 0..<msg.length() {
+    out.push(msg[i])
+  }
+  Bytes::from_array(out)
+}
+
+///|
+/// W2 回归辅助：构造 n 字节 `[0xDE,0xAD,0xBE,0xEF]` 循环消息——每字节均 ≥0x80，
+/// 覆盖 4 字节字的全部四个提取通道（含最后一字节），用于锁定无符号掩码语义。
+fn w2_high_bytes(n : Int32) -> Bytes {
+  let pat : Array[Byte] = [b'\xde', b'\xad', b'\xbe', b'\xef']
+  let out : Array[Byte] = []
+  for i in 0..<n {
+    out.push(pat[i % 4])
+  }
+  Bytes::from_array(out)
+}
+
+///|
+/// W2/T-W2-1：真实 fixture 的 header SHA-1 signature 全部校验通过。
+test "W2 signature_ok: 真实 fixture 全部通过" {
+  let fixtures : Array[Bytes] = [
+    fixture_tvshell_dex(),
+    fixture_motionshell_dex(),
+    fixture_fx_multidex_dex(),
+    fixture_fx_multidex2_dex(),
+  ]
+  let mut ok = 0
+  for fx in fixtures {
+    if @dex.signature_ok(fx) {
+      ok = ok + 1
+    }
+  }
+  assert_eq(
+    ok,
+    4,
+    msg="4 个真实 fixture 的 SHA-1 signature 应全部一致",
+  )
+}
+
+///|
+/// W2/T-W2-4：不足 32 字节 → `UnexpectedEof(32)`（不 panic）；32 字节空体合法。
+test "W2 signature_ok: len<32 抛 UnexpectedEof(32)，32 字节空体合法" {
+  let mut eofs = 0
+  for n in [0, 1, 12, 31] {
+    ignore(@dex.signature_ok(w2_zeros(n))) catch {
+      @dex.DexError::UnexpectedEof(need) => {
+        assert_eq(need, 32)
+        eofs = eofs + 1
+      }
+      _ => ()
+    }
+  }
+  assert_eq(eofs, 4)
+  let empty_sha1 = b"\xda\x39\xa3\xee\x5e\x6b\x4b\x0d\x32\x55\xbf\xef\x95\x60\x18\x90\xaf\xd8\x07\x09"
+  assert_true(@dex.signature_ok(w2_header_with_digest(empty_sha1, w2_zeros(0))))
+}
+
+///|
+/// W2：RFC 3174 已知向量（"abc"、56 字节跨块消息）经 `signature_ok` 通道验证。
+test "W2 signature_ok: RFC 3174 已知向量 abc / 56B" {
+  let abc = b"abc"
+  let abc_sha1 = b"\xa9\x99\x3e\x36\x47\x06\x81\x6a\xba\x3e\x25\x71\x78\x50\xc2\x6c\x9c\xd0\xd8\x9d"
+  assert_true(@dex.signature_ok(w2_header_with_digest(abc_sha1, abc)))
+  let long = b"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+  let long_sha1 = b"\x84\x98\x3e\x44\x1c\x3b\xd2\x6e\xba\xae\x4a\xa1\xf9\x51\x29\xe5\xe5\x46\x70\xf1"
+  assert_true(@dex.signature_ok(w2_header_with_digest(long_sha1, long)))
+}
+
+///|
+/// W2 回归：高字节（≥0x80）消息的 SHA-1 必须与 OS 原生参考一致。
+/// 覆盖单字、单块、块边界、多块四条路径，锁定 byte→UInt32 的 `& 0xFFU` 无符号掩码
+/// （sha1.mbt 中每字节提取均与 parse.mbt 的 read_u32u 模式对齐）。
+test "W2 signature_ok: 高字节消息与 OS 原生 SHA-1 一致" {
+  let cases : Array[(Int32, Bytes)] = [
+    (
+      4, b"\xd7\x8f\x8b\xb9\x92\xa5\x6a\x59\x7f\x6c\x7a\x1f\xb9\x18\xbb\x78\x27\x13\x67\xeb",
+    ),
+    (
+      55, b"\xdd\x45\x2e\xd5\x3d\x62\xfe\x50\x7e\xb2\x6b\x2d\x9e\x2a\xee\xee\x82\xa5\x5e\x88",
+    ),
+    (
+      56, b"\xa0\xfb\xb9\x97\xd1\x5b\xa0\xb4\x5c\x91\x3e\x24\x9a\x48\xf6\x37\xe5\x86\xab\x23",
+    ),
+    (
+      72, b"\x7f\xa7\x43\xb3\x15\x5c\xd8\xc0\x56\x83\x3a\x35\x6b\xae\x9d\xab\xbf\x3a\xad\xcc",
+    ),
+  ]
+  for (n, digest) in cases {
+    assert_true(
+      @dex.signature_ok(w2_header_with_digest(digest, w2_high_bytes(n))),
+      msg="n=\{n} 高字节消息 SHA-1 应与参考一致",
+    )
+  }
+}
+
+///|
+/// W2/T-W2-2：signature 区单 bit 翻转 → false。
+test "W2 signature_ok: signature 单 bit 翻转 -> false" {
+  let fx = fixture_tvshell_dex()
+  let arr : Array[Byte] = []
+  for i in 0..<fx.length() {
+    arr.push(fx[i])
+  }
+  arr[12] = (arr[12].to_int() ^ 0x01).to_byte()
+  assert_true(!@dex.signature_ok(Bytes::from_array(arr)))
+}
+
+///|
+/// W2/T-W2-5：防火墙——调用 `signature_ok` 不改变 `parse` 结果（同输入前后一致）。
+test "W2 signature_ok: 防火墙 parse 结果不受调用影响" {
+  let fx = fixture_motionshell_dex()
+  let before = @dex.parse(fx)
+  ignore(@dex.signature_ok(fx))
+  let after = @dex.parse(fx)
+  assert_eq(before.checksum, after.checksum)
+  assert_eq(before.signature.length(), after.signature.length())
+  assert_eq(before.strings.length(), after.strings.length())
+  assert_eq(before.classes.length(), after.classes.length())
+}

@@ -795,3 +795,16 @@ test "error: bad debug_info" {
   }
   check(got, msg="expected BadDebugInfo")
 }
+
+///|
+/// W2/T-W2-3：body 单 bit 翻转 + adler32 重算 → `parse` 仍成功，而
+/// `signature_ok` 为 false（adler32 与 SHA-1 两通道相互独立）。
+test "W2 signature_ok: body 翻转 + adler 重算 -> parse 成功而签名为 false" {
+  let fx = build_dex()
+  let arr = fx.arr.copy()
+  arr[0x200] = (arr[0x200].to_int() ^ 0x01).to_byte()
+  b_fix_checksum(arr)
+  let data = Bytes::from_array(arr)
+  ignore(@dex.parse(data)) // 不得抛错：adler32 通道合法
+  check(!@dex.signature_ok(data), msg="body 改变后 SHA-1 必须失配")
+}
