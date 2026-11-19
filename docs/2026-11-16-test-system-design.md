@@ -200,7 +200,7 @@ pwsh -File tools/bench-dex.ps1   # 可选第六道（需 python + native release
 - [x] W2：T-W2-1, T-W2-2, T-W2-3, T-W2-4, T-W2-5, T-W2-6（含防火墙恒等式 I1 与双目标 parity，2026-11-19 落地，提交 1225082）
 - [x] W3：T-W3-1, T-W3-2, T-W3-3, T-W3-4, T-W3-5（含 E10 写盘前整体拒绝，2026-11-19 落地，提交 f410513）
 - [x] W4：T-W4-1, T-W4-2, T-W4-3, T-W4-4, T-W4-5（map 黄金 + 0x0007/0x0008 原样 + 三错误路径 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 b3a4110）
-- [ ] W5：T-W5-1, T-W5-2, T-W5-3, T-W5-4, T-W5-5, T-W5-6, T-W5-7（dexdump -d 差分 + 状态机边界 + I6）
+- [x] W5：T-W5-1, T-W5-2, T-W5-3, T-W5-4, T-W5-5, T-W5-6, T-W5-7（合成 fixture 事件序列黄金 + NO_INDEX None + special opcode 公式 + 0x0B BadDebugInfo/截断 + 全前缀扫描 + line_start 恒等式/P5 防火墙 + 快照纯加法，2026-11-19 落地，提交待哈希）
 - [x] W6：T-W6-1, T-W6-2, T-W6-3, T-W6-4（width 1/2/4/8 全矩阵 + 奇数 pad 恒等式 + 四错误路径 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 76ecf73）
 - [x] W7（选项 A 裁决）：T-W7-1, T-W7-2, T-W7-3, T-W7-4, T-W7-5（fx-dyn site 黄金 + 排序 + P5 防火墙 + 0xFE/0xFF 不产 site + callers/callees 双向一致 + 快照纯加法，2026-11-19 落地，提交待哈希）
 - [x] W8：T-W8-1, T-W8-2, T-W8-3, T-W8-4（多类型 handler 全量展开 + catch-all Some/None + I5 恒等式 + P5 防火墙 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 c170174）

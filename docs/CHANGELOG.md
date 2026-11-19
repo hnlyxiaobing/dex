@@ -3,6 +3,28 @@
 > 本文件登记影响公开面 / 行为 / 证据链的变更。加法性 API 变更必须在此留一条，且与
 > `pkg.generated.mbti` 快照在同一次提交。条目按时间倒序。
 
+## 2026-11-19 · W5：debug_info 状态机展开视图（新增公开 API）
+
+- 新增 `debugview.mbt`：补齐 B8 深度限制——按 DEX 规范 debug_info_item 状态机逐 opcode
+  展开行号/局部变量/文件切换事件为 `DebugEvent` 序列。
+- **公开 API（纯加法）**：`pub fn debug_info_view(Bytes, Int32) -> DebugInfoView raise DexError`、
+  `pub enum DebugEvent{9 变体}`、`pub struct DebugInfoView{line_start, parameter_names, events}`。
+  `pkg.generated.mbti` **+15 处（1 fn + 1 enum[9 var] + 1 struct[3 field]），0 删改**。
+- 实现要点：状态机严格按 AOSP dex-format 规范——opcode 0x00 END_SEQUENCE / 0x01
+  ADVANCE_PC(uleb) / 0x02 ADVANCE_LINE(sleb) / 0x03–0x05 START_LOCAL 族 / 0x06 END_LOCAL
+  / 0x07 RESTART_LOCAL / 0x08–0x09 prologue/epilogue / 0x0A SET_FILE / 0x0B 保留→BadDebugInfo /
+  0x0C–0xFF special opcode（line_delta=-4+adj%15, addr_delta=adj/15）。
+  名字/类型经 string_ids / type_ids 表解析（MUTF-8，内建 StringCache）；uleb128p1 编码
+  （prologue param names: value=0→None, value>0→string_ids[value-1]）。
+  事件流长度天然上界（每事件至少 1 字节），无死循环风险。
+- 错误映射：越界/截断/坏 uleb/sleb/保留 0x0B→BadDebugInfo；索引越界→InvalidIndex。
+  与既有长度校验共存——旧 `code.debug_info` raw 字节保持不变（P4/P5 防火墙律）。
+- 新增 6 个测试（136 → 142）：T-W5-1 合成 fixture
+  事件序列黄金、T-W5-2 NO_INDEX→None + debug_info_off=0 空视图、T-W5-3 未另立（special
+  opcode 公式已在黄金中覆盖）、T-W5-4 0x0B BadDebugInfo + 截断 BadDebugInfo、
+  T-W5-5 全前缀截断扫描无 panic、T-W5-6 line_start 恒等式 + P5 防火墙 raw debug_info 不变。
+- 五门禁全绿。
+
 ## 2026-11-19 · W7：xref 扩展索引覆盖 0xFA–0xFD（新增公开 API，选项 A）
 
 - 新增 `xref_ext.mbt`：补齐 B4 调用图盲区——invoke-polymorphic{,/range}（0xFA/0xFB）

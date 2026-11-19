@@ -28,6 +28,8 @@ pub fn catch_handlers(Bytes, Int32) -> Array[CatchHandlerView] raise DexError
 
 pub fn class_annotations(Bytes, Int32) -> AnnotationsDirectory? raise DexError
 
+pub fn debug_info_view(Bytes, Int32) -> DebugInfoView raise DexError
+
 pub fn disasm(DexFile, Int32) -> String raise DexError
 
 pub fn encoded_array(Bytes, Int32) -> Array[EncodedValue] raise DexError
@@ -158,6 +160,24 @@ pub(all) struct CodeItem {
   insns : Array[Instruction]
   tries : Array[TryItem]
   debug_info : Bytes
+}
+
+pub(all) enum DebugEvent {
+  AdvancePc(Int32)
+  AdvanceLine(Int32)
+  StartLocal(Int32, String, String)
+  StartLocalExtended(Int32, String, String, String)
+  EndLocal(Int32)
+  RestartLocal(Int32)
+  SetPrologueEnd
+  SetEpilogueBegin
+  SetFile(String)
+}
+
+pub(all) struct DebugInfoView {
+  line_start : Int32
+  parameter_names : Array[String?]
+  events : Array[DebugEvent]
 }
 
 pub(all) struct DexFile {
