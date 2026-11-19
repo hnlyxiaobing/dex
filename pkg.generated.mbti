@@ -22,6 +22,8 @@ pub fn call_site_ref_name(Bytes, Int32) -> String raise DexError
 
 pub fn call_sites(Bytes) -> Array[CallSiteItem] raise DexError
 
+pub fn catch_handlers(Bytes, Int32) -> Array[CatchHandlerView] raise DexError
+
 pub fn class_annotations(Bytes, Int32) -> AnnotationsDirectory? raise DexError
 
 pub fn disasm(DexFile, Int32) -> String raise DexError
@@ -124,6 +126,11 @@ pub(all) struct ArrayPayloadView {
 pub(all) struct CallSiteItem {
   call_site_off : Int32
   values : Array[EncodedValue]
+}
+
+pub(all) struct CatchHandlerView {
+  pairs : Array[(Int32, Int32)]
+  catch_all_offset : Int32?
 }
 
 pub(all) struct ClassDef {

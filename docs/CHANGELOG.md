@@ -3,6 +3,24 @@
 > 本文件登记影响公开面 / 行为 / 证据链的变更。加法性 API 变更必须在此留一条，且与
 > `pkg.generated.mbti` 快照在同一次提交。条目按时间倒序。
 
+## 2026-11-19 · W8：catch handler 多类型展开视图（新增公开 API）
+
+- 新增 `catchview.mbt`：补齐 B7 深度限制——encoded_catch_handler_list 全量
+  type_addr_pairs 展开。布局（AOSP dex-format）：uleb128 count + 每 handler
+  sleb128 类型对数量（size>0 无 catch-all；size<=0 为 |size| 对 + 1 个 catch-all）、
+  |size| 个 (uleb type_idx, uleb addr)、size<=0 时末尾 uleb catch_all_addr。
+  不改既有 `CodeItem` / `TryItem` 冻结 struct 与 first_type 口径（P4/P5 防火墙律）。
+- **公开 API（纯加法）**：`pub(all) struct CatchHandlerView { pairs : Array[(Int32, Int32)];
+  catch_all_offset : Int32? }` 与 `pub fn catch_handlers(Bytes, Int32) ->
+  Array[CatchHandlerView] raise DexError`。`pkg.generated.mbti` **+2 处（1 fn + 1 struct），
+  0 删改**。`list_off` 为 handler list 的字节偏移（uleb 计数起点）。
+- 错误映射（复用 BadCodeItem）：越界 / 坏 uleb/sleb → `BadCodeItem(list_off, …)`，
+  与 parse 的 catch handler 解析共用同一 helper（`uleb_code` / `sleb_code`）。
+- 新增 5 个测试（125 → 130）：T-W8-1 多类型 handler 全量展开黄金、T-W8-2 catch-all
+  Some/None 正确、T-W8-3 恒等式 I5（pairs[0].0 == 旧 catch_type_index）、T-W8-4 P5
+  防火墙（parse 旧通道输出不变）、DoD 全前缀截断扫描无 panic。
+- 五门禁全绿（`moon test` 130/130）；3 个既有 `#skip` 保持原样。
+
 ## 2026-11-19 · W4：map_list 结构化视图（新增公开 API）
 
 - 新增 `maplist.mbt`：把 map_list 从原始字节（`parse_dex.map_list`）升级为逐项 `MapItem`

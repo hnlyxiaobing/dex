@@ -2,7 +2,7 @@
 
 > 建立：2026-11-16 ｜ 状态：设计生效，随开发文档逐包落地 ｜ 适用仓库：本仓库（独立自包含）
 > 配套文档：[2026-11-16-structural-fidelity-dev-plan.md](2026-11-16-structural-fidelity-dev-plan.md)（`T-W*-*` 验收 ID 一一对应；B# 证据行出自该文档 §0）
-> 现状基线：2026-11-16 五门禁实测全绿，`moon test` 96/96（99 条声明 − 3 条 `#skip`，见 §6.4）。W1/W2/W3 落地后（2026-11-19）`moon test` 为 109/109（另 3 条 `#skip`）。W4 落地后（2026-11-19）`moon test` 为 115/115（另 3 条 `#skip`）。W6 落地后（2026-11-19）`moon test` 为 125/125（另 3 条 `#skip`）。
+> 现状基线：2026-11-16 五门禁实测全绿，`moon test` 96/96（99 条声明 − 3 条 `#skip`，见 §6.4）。W1/W2/W3 落地后（2026-11-19）`moon test` 为 109/109（另 3 条 `#skip`）。W4 落地后（2026-11-19）`moon test` 为 115/115（另 3 条 `#skip`）。W6 落地后（2026-11-19）`moon test` 为 125/125（另 3 条 `#skip`）。W8 落地后（2026-11-19）`moon test` 为 130/130（另 3 条 `#skip`）。
 
 ## 1. 第一性原理：本库的正确性是什么
 
@@ -93,7 +93,7 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 | F7 | encoded_value 18 变体 | ✓ | ✓ | ✓ | ✓ | ✓ | B5 已实现 | 无 |
 | F8 | 注解四类 + O(1) 批量索引 | ✓ | ✓ | ✓ | ✓ | ✓ | B13 已实现+bench | 无 |
 | F9 | MethodHandle/call_site | ✓ | ✓ | ✓ | ✓ | ✓ | B9 已实现 | 无 |
-| F10 | debug_info / try-catch | ✓ | ✓ | ✓ | 部分 | ✓ | B7/B8 仅长度校验+raw | 状态机→W5；多类型→W8 |
+| F10 | debug_info / try-catch | ✓ | ✓ | ✓ | ✓ | ✓ | B7/B8 仅长度校验+raw | 状态机→W5；多类型 `catch_handlers`→W8（2026-11-19 落地） |
 | F11 | map_list | ✓ | ✓ | ✓ | ✓ | ✓ | B9 仅 raw | 结构化视图 `map_items`→W4（2026-11-19 落地） |
 | F12 | 值化错误体系（9 变体） | ✓ | ✓ | — | — | ✓ | B11；簿记 9/9（§6.2） | 新路径复用变体须补簿记 |
 | F13 | CLI 三视图/JSON/退出码 | ✓ | ✓ | ✓ | ✓ | ✓ | B14 已实现 | CRC 拒绝场景已落地（W3，T-W3-3） |
@@ -120,7 +120,7 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 | BadTableOffset(TableKind,Int32) | dex_sem_annotations_test.mbt L1064–1077（坏 visibility/保留 value_type）；invoke 路径 res0 非 0；W4 unused 非 0 已建（maplist_test.mbt，MapList） | W5 保留 opcode 0x0B |
 | InvalidIndex(TableKind,Int32) | dex_test.mbt L509–525（越界 handle）；dex_sem_annotations_test.mbt L1092–1099（class_index 越界） | W5 名字/类型索引越界 |
 | InvalidInstruction(Int32,Int32) | dex_test.mbt L725–740（0x3E）；fixtures_malformed_test.mbt L174–187 | 无（0xFA–0xFF 已转正，B3） |
-| BadCodeItem(Int32,String) | dex_test.mbt L744–752（code_item 越界）；payload 截断/溢出路径；W6 元素视图四错误路径已建（payloadview_test.mbt：ident 非 0x0300 / size 溢出 / width=0 / 截断） | W8 handler 越界 |
+| BadCodeItem(Int32,String) | dex_test.mbt L744–752（code_item 越界）；payload 截断/溢出路径；W6 元素视图四错误路径已建（payloadview_test.mbt）；W8 handler 五错误路径已建（catchview_test.mbt：坏 uleb/sleb + 截断全前缀扫描） | （已全部覆盖） |
 | BadDebugInfo(Int32,String) | dex_test.mbt L781–796（debug 流截断） | W5 保留 opcode 0x0B/坏 uleb |
 | MultiDexNotMerged(String) | dex_test.mbt L660–683（ZIP 魔数/尾随拼接） | 无（W10 裁决前口径冻结） |
 
@@ -132,7 +132,7 @@ R runner：样本路径 + 登记哈希 → 哈希不符拒绝执行 → 规范�
 - I2：`EncodedValue 解码字节宽度 == 规范对齐规则`（float/double 左对齐补零、整型右对齐符号扩展，B5）；解码 consumed 字节数与 raw 切片长度一致。
 - I3：`build_xref 输出排序 == method_ref 升序 × offset 升序`，且 site 集合只含 0x52–0x78 域（B4；W7 后旧索引仍满足——防火墙 T-W7-2）。
 - I4：`AnnotationsIndex 逐类查询结果 == 单入口逐类重建结果`（B13 性能修复的语义等价，既有 bench 行数下限断言 CLZ|/ANN|/SVC| ≥ 类数）。
-- I5：`catch_handlers(code)[i].pairs[0].0 == 旧 catch_type_index`（W8，T-W8-3）。
+- I5：`catch_handlers(code)[i].pairs[0].0 == 旧 catch_type_index`（W8，T-W8-3，2026-11-19 落地）。
 - I6：`debug_info_view.line_start == debug 流头 line_start`，且旧 raw 字节 API 输出不变（W5，T-W5-6）。
 - I7：`array_payload_view.elements.length == size 且 Σwidth == data_bytes（奇数补零对齐）`（W6，T-W6-2）。
 - I8：`CLI norm 记录行 == 库 API 渲染同源`（P4 双通道一致律，黄金钉死）。
@@ -203,7 +203,7 @@ pwsh -File tools/bench-dex.ps1   # 可选第六道（需 python + native release
 - [ ] W5：T-W5-1, T-W5-2, T-W5-3, T-W5-4, T-W5-5, T-W5-6, T-W5-7（dexdump -d 差分 + 状态机边界 + I6）
 - [x] W6：T-W6-1, T-W6-2, T-W6-3, T-W6-4（width 1/2/4/8 全矩阵 + 奇数 pad 恒等式 + 四错误路径 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 76ecf73）
 - [ ] W7（须裁决，裁决前保持未实现）：T-W7-1, T-W7-2, T-W7-3, T-W7-4, T-W7-5（含防火墙 I3）
-- [ ] W8：T-W8-1, T-W8-2, T-W8-3, T-W8-4（含 I5）
+- [x] W8：T-W8-1, T-W8-2, T-W8-3, T-W8-4（多类型 handler 全量展开 + catch-all Some/None + I5 恒等式 + P5 防火墙 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 c170174）
 - [ ] W9（须裁决）：T-W9-1, T-W9-2 按裁决选项执行
 - [ ] W10（须裁决）：T-W10-1 维持 MultiDexNotMerged 口径
 - [ ] L5 增强：parity 脚本 / 随机变异 runner / 变异自检四注入点（随 W2 起逐步强制）
