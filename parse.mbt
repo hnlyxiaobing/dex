@@ -572,7 +572,7 @@ fn parse_code_item(
     }
   }
   let debug_info = if debug_info_off == 0 {
-    Bytes::new(0)
+    Bytes::make(0, b'\x00')
   } else {
     if debug_info_off < 0x70 || debug_info_off >= file_size {
       raise DexError::BadDebugInfo(
@@ -1013,7 +1013,7 @@ fn parse_dex(data : Bytes) -> DexFile raise DexError {
   }
   // map_list 原始字节
   let map_list = if map_off == 0 {
-    Bytes::new(0)
+    Bytes::make(0, b'\x00')
   } else {
     if map_off < 0x70 || map_off + 4 > file_size {
       raise DexError::UnexpectedEof(map_off)

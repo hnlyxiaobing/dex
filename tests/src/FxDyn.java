@@ -1,4 +1,4 @@
-// 受控样本源码（dex/tests/build-dyn.ps1 构建）：038+ 指令组 + payload 语义样本。
+// 受控样本源码（tests/build-dyn.ps1 构建）：038+ 指令组 + payload 语义样本。
 // 目标指令面：
 //   1) lambda / 方法引用 -> invokedynamic -> d8(min-api 26) 保留 invoke-custom（0xfc）
 //      + call_site_id_item + method_handles_item（bootstrap MethodHandle 常量）；

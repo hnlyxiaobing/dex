@@ -17,12 +17,11 @@
 /// payload 伪指令（IndexNone）不产 site；aget/aput 不算字段访问；
 /// 注解/静态初值的 ValueField/ValueMethod 引用不入 P1 索引。
 ///
-/// 盲区（P1 不覆盖，如实声明）：反射；MethodHandle 体系（0xFA–0xFF 解析层
-/// 即拒 `InvalidInstruction`——含此类指令的 code_item 在 parse 时已失败，
-/// xref 不可见，测试钉死该口径）；invoke-custom / invoke-polymorphic
-/// （0x73/0x79/0x7A 本库指令表未定义，同样解析层即拒）；JNI RegisterNatives /
-/// 动态代理 / 运行时织入；跨 dex 调用图；虚分派展开（非目标）；
-/// 注解 / encoded_array / catch_type 引用。
+/// 盲区（P1 不覆盖，如实声明）：反射；MethodHandle / call site 间接目标
+/// （0xFA–0xFF 已纳入指令表可解析；本索引 P1 不覆盖 0xFA–0xFD 的调用引用，
+/// 0xFE/0xFF 为 const-method-handle / const-method-type 族、无调用目标）；
+/// JNI RegisterNatives / 动态代理 / 运行时织入；跨 dex 调用图；
+/// 虚分派展开（非目标）；注解 / encoded_array / catch_type 引用。
 ///
 /// 复杂度：`build_xref` = O(M+I) 一次线性扫描（M=method_ids 条目数、
 /// I=指令总数，`instruction_operands` 重解码），O(S) 空间（S=访问点数），
@@ -66,7 +65,8 @@ pub struct XrefIndex {
 /// opcode 数值域 → `XrefKind`（按数值域归一，勿按助记符）：
 /// 0x6e–0x72 / 0x74–0x78 两域内按位次映射五族调用（/range 同 kind）；
 /// 0x52–0x58 / 0x59–0x5f / 0x60–0x66 / 0x67–0x6d 四域各归一为一类字段访问。
-/// 其余 opcode（含 aget/aput、payload 伪指令、盲区 0xFA–0xFF）返回 `None`。
+/// 其余 opcode（含 aget/aput、payload 伪指令、0xFA–0xFF 指令组与
+/// invoke-custom/polymorphic）返回 `None`。
 fn xref_kind_of_opcode(op : Int32) -> XrefKind? {
   if (op >= 0x6e && op <= 0x72) || (op >= 0x74 && op <= 0x78) {
     // 两域 0x6e–0x72 / 0x74–0x78 内按位次：Virtual/Super/Direct/Static/Interface

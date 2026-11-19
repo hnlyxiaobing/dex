@@ -2,7 +2,8 @@
 /// dex-cli：DEX 反汇编/清单 CLI（hnlyxiaobing/dex 公开 API 驱动）。
 /// 契约：退出码 0=成功 / 1=解析或IO错误 / 2=用法错误；
 /// 默认记录行输出（norm 口径与 dexdump 规范化黄金一致，见 tests/ASSETS.md §2），
-/// `--json` 机器可读。APK 容器条目读取使用 moonbitlang/core/archive/zip（零跨模块依赖）。
+/// `--json` 机器可读。APK 容器条目读取使用自研宽松 ZIP 读取器 zipmin
+/// （`cmd/main/zipmin.mbt`，core/compress/flate 解压，零跨模块依赖）。
 
 ///|
 let tool_name = "dex-cli"

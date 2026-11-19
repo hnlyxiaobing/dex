@@ -1,15 +1,13 @@
 ﻿# bench-dex.ps1 -- dex 真实规模性能门禁（P0 D2，fail-closed，第六道可选显式门禁）。
 #
 # 定位与 CI 裁决（写进注释，不修改任何 ci.yml）：
-#   工作区根 .github/workflows/ci.yml:22-27 已有明确裁决「不增设机械第 6 道门禁」，
-#   且 11 份模块 ci.yml 云上 11/11 全绿。本门禁定位为「第六道可选显式门禁」：
-#   本地 / CI 显式调用的独立脚本，不挂进既有五道门禁链路
-#   （moon check --deny-warn / moon build / moon test / moon fmt --check /
-#    moon info && git diff --exit-code 快照一致性）。
-#   理由：GitHub Actions ubuntu-latest 为共享机型，绝对时间阈值会造成 flaky
-#   假阳性，把防回归门禁变成随机回归；而 5s 阈值相对本地实测约 1s 有 5 倍
-#   余量，本地可稳定捕获 O(C x T) 回退（旧实现逐类重建全表，本合成 DEX 上
-#   实测约 17s，修复后约 0.06s）。故保持五道门禁链路不动，本脚本仅显式调用。
+#   本仓库既有五道门禁链（moon check --deny-warn / moon build / moon test /
+#   moon fmt --check / moon info && git diff --exit-code 快照一致性）不增设
+#   机械第 6 道门禁。理由：GitHub Actions ubuntu-latest 为共享机型，绝对时间
+#   阈值会造成 flaky 假阳性，把防回归门禁变成随机回归；而 5s 阈值相对本地
+#   实测约 1s 有 5 倍余量，本地可稳定捕获 O(C x T) 回退（旧实现逐类重建全表，
+#   本合成 DEX 上实测约 17s，修复后约 0.06s）。故本门禁定位为「第六道可选显式
+#   门禁」：本地 / CI 显式调用的独立脚本，不挂进既有五道门禁链路。
 #
 # Usage:  pwsh -File tools/bench-dex.ps1 [-Cli <exe路径>] [-WorkDir <dir>]
 #         从模块根 dex/ 运行；亦可用 powershell -File（PowerShell 5.1 兼容）。

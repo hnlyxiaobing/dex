@@ -1,5 +1,5 @@
 ///|
-/// DEX 注解与 encoded_value 语义解码：encoded_value 全 16 种 value_type、
+/// DEX 注解与 encoded_value 语义解码：encoded_value 全 18 种 value_type、
 /// encoded_array、encoded_annotation、annotation_item / annotation_set_item。
 /// 规范依据：AOSP dex-format 的 annotation_directory_item / annotation_set_item /
 /// annotation_item / encoded_annotation / encoded_value / encoded_array 章节。
@@ -9,8 +9,9 @@
 /// - 整型右对齐符号/零扩展（最小宽度），float/double **左对齐**、低位补零
 ///   （dex 格式原文 "zero-extended to the right"，实测 3.5f 存 `60 40` 两字节）；
 /// - value_type 码表：byte=0x00 short=0x02 char=0x03 int=0x04 long=0x06
-///   float=0x10 double=0x11 string=0x17 type=0x18 field=0x19 method=0x1a
-///   enum=0x1b array=0x1c annotation=0x1d null=0x1e boolean=0x1f。
+///   float=0x10 double=0x11 method_type=0x15 method_handle=0x16
+///   string=0x17 type=0x18 field=0x19 method=0x1a enum=0x1b array=0x1c
+///   annotation=0x1d null=0x1e boolean=0x1f。
 
 ///|
 /// annotation_item.visibility：0=BUILD（编译期可见）、1=RUNTIME、2=SYSTEM（VM 注解）。
@@ -21,7 +22,7 @@ pub(all) enum AnnotationVisibility {
 }
 
 ///|
-/// encoded_value 全 16 种 value_type 的结构化解码结果。
+/// encoded_value 全 18 种 value_type 的结构化解码结果。
 /// 引用类值（string/type/field/method/enum）在解码时按表解析为名字
 /// （字段/方法/枚举沿用 smali 风格 `Lcls;->name:type` / `Lcls;->name(sig)ret`）；
 /// 整型/字符为扩展后的数值；float/double 为 IEEE-754 位模式还原值。

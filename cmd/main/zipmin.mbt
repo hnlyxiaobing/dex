@@ -1,5 +1,5 @@
 ///|
-/// 宽松 ZIP 读取器（axml-cli；dex-cli 有同构实现）。
+/// 宽松 ZIP 读取器（dex-cli 自研；仅用 stdlib `@flate` 解压）。
 /// 动机：moonbitlang/core/archive/zip 严格遍历 extra 字段链，会拒绝 aapt2 对齐填充
 /// 产生的 1~3 字节裸填充 extra（真实第三方 APK 常见，unzip/zipinfo 等工具均容忍）。
 /// 实测（开发期一个 52 MB 真实第三方 APK）：1028 个 local 头中
@@ -165,7 +165,7 @@ fn zip_min_extract(data : Bytes, e : ZEntry) -> Bytes raise {
     // 解压上限取中央目录 usize（防御 zip 炸弹；usize 未知时退化为 1GiB）
     @flate.inflate_exact(
       z_slice(data, start, e.csize).clamped_view(),
-      max_output=if e.usize > 0 { e.usize } else { 1073741824 },
+      max_output_bytes=if e.usize > 0 { e.usize } else { 1073741824 },
     )
   } else {
     eprintln("error: zip: 不支持的压缩方法 \{e.comp}：\{e.name}")

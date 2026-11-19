@@ -13,8 +13,7 @@
 #   5. moon info && git diff --exit-code -- pkg.generated.mbti cmd/main/pkg.generated.mbti
 #      （pkg.generated.mbti 快照与源码一致性 fail-closed；cmd/main 下的快照同样纳入 diff 范围。
 #        纳入范围 = 本仓库内受版本控制且由 moon info 生成的全部快照，即仓库根与 cmd/main 两处；
-#        pkg.generated.mbti.r1 是 R1 基线存档、不由 moon info 生成，.mooncakes/ 下第三方包的
-#        快照不受本仓库版本控制，二者均不在 diff 范围。）
+#        .mooncakes/ 下第三方包的快照不受本仓库版本控制，不在 diff 范围。）
 # （可选 moon clean：仅清理，continue-on-error，不参与判定）
 #
 # 本仓库工具链版本说明：
@@ -111,7 +110,7 @@ jobs:
           set -euo pipefail
           moon info
           if ! git diff --exit-code -- pkg.generated.mbti cmd/main/pkg.generated.mbti; then
-            echo "::error::Gate 5/5 failed: pkg.generated.mbti snapshot out of sync with sources. Run 'moon info' locally and commit the regenerated snapshot together with the API change (additive changes also require a regenerated snapshot and an API-change note in this repository's docs/API.md)."
+            echo "::error::Gate 5/5 failed: pkg.generated.mbti snapshot out of sync with sources. Run 'moon info' locally and commit the regenerated snapshot together with the API change (additive changes also require a regenerated snapshot and an API-change note in this repository's docs/CHANGELOG.md)."
             exit 1
           fi
           echo "Gate 5/5 OK: snapshot in sync (pkg.generated.mbti + cmd/main/pkg.generated.mbti)"

@@ -4,7 +4,7 @@
 # Tool versions are recorded in tests/ASSETS.md (javac 21.0.9 / d8 8.6.2-dev / android-35).
 param([switch]$Update)
 $ErrorActionPreference = 'Stop'
-$work = Join-Path $PSScriptRoot 'work'              # dex/tests/work (not committed)
+$work = Join-Path $PSScriptRoot 'work'              # tests/work (not committed)
 $fixDir = Join-Path $PSScriptRoot 'fixtures'
 $javac = 'C:\Program Files\Java\jdk-21\bin\javac.exe'
 $d8 = 'D:\Android\Sdk\build-tools\35.0.0\d8.bat'

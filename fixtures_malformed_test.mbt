@@ -189,12 +189,14 @@ test "dex malformed: 未知指令 opcode 报 InvalidInstruction 而非 panic" {
 }
 
 ///|
-/// DEX 是扁平表结构，没有 AXML/ZIP 那样的 chunk 概念；“未知 chunk 跳过”的等价
-/// 用例在 axml/fixtures_malformed_test.mbt（未知 chunk 被跳过且不影响已有结构）。
+/// DEX 是扁平表结构，没有 AXML/ZIP 那样的 chunk 概念，故“未知 chunk 跳过”在本库
+/// 无对应形态；保留 #skip 以显式记录该口径，不把缺失伪装为通过。DEX 对未知结构的
+/// 等价口径是 fail-closed（报 `DexError` 而非跳过），见上文无效/污染样本用例。
+/// 同构语料另见 axml 仓库（非本仓库依赖）。
 #skip
 test "dex malformed: 未知 chunk [SKIPPED: DEX 无 chunk 概念]" {
   println(
-    "SKIPPED: DEX 无 chunk；等价用例见 axml 链（未知 chunk 跳过）",
+    "SKIPPED: DEX 无 chunk 概念，本形态不适用（不 inflate 为通过）",
   )
 }
 
@@ -205,7 +207,7 @@ test "dex malformed: 未知 chunk [SKIPPED: DEX 无 chunk 概念]" {
 test "dex malformed: 多 dex 样本截断与污染报错且不 panic" {
   let src = fixture_fx_multidex_dex()
   let src2 = fixture_fx_multidex2_dex()
-  // 512 字节截断与 dex/tests/fixtures/edge-dex-truncated-512.dex（程序化派生样本）同字节。
+  // 512 字节截断与 tests/fixtures/edge-dex-truncated-512.dex（程序化派生样本）同字节。
   for cut in [0, 50, 500, 512, 1000, 2115] {
     assert_true(
       fx_raises(fx_cut(src, cut)),

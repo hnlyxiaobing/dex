@@ -1,7 +1,7 @@
 # dex · DEX 解析与反汇编
 
 > 独立发布单元 ｜ L1 逆向输入 ｜ `preferred_target = wasm` ｜ Apache-2.0
-> 状态：`moon test` **96/96** 通过（2026-11-11 本机实测，另有 3 个 `#skip` 用例不计入）；本文件是本仓库**唯一**说明文档。
+> 状态：`moon test` **96/96** 通过（2026-11-19 本机复验，另有 3 个 `#skip` 用例不计入）；本文件是本仓库**唯一**说明文档。
 > 公开 API 以 `pkg.generated.mbti` 为准（由 `moon info` 生成，禁手工编辑）；加法性变更须登记簿记 + 快照审阅 + 快照门禁。
 
 ## 1. 定位与边界
@@ -61,17 +61,21 @@ pub(all) struct AnnotationElement {
 pub(all) struct AnnotationSet {
 pub(all) enum AnnotationVisibility {
 pub(all) struct AnnotationsDirectory {
+pub struct AnnotationsIndex {
 pub fn AnnotationsIndex::class_annotations(Self, Int32) -> AnnotationsDirectory? raise DexError
 pub fn AnnotationsIndex::static_values(Self, Int32) -> Array[EncodedValue] raise DexError
 pub(all) struct CallSiteItem {
 pub(all) struct ClassDef {
 pub(all) struct CodeItem {
+pub suberror DexError {
+pub fn DexError::to_repr(Self) -> @debug.Repr
 pub(all) struct DexFile {
 pub fn DexFile::classes(Self) -> Array[ClassDef]
 pub fn DexFile::code(Self, Int32) -> CodeItem? raise DexError
 pub fn DexFile::methods(Self, Int32) -> Array[MethodDef] raise DexError
 pub fn DexFile::strings(Self) -> Array[String]
 pub(all) enum DexVersion {
+pub trait Disassembler {
 pub(all) struct EncodedAnnotation {
 pub(all) enum EncodedValue {
 pub(all) struct FieldAnnotations {
@@ -81,6 +85,7 @@ pub(all) struct InsnOperands {
 pub(all) struct Instruction {
 pub(all) struct MethodAnnotations {
 pub(all) struct MethodDef {
+pub type MethodHandle = Int32
 pub(all) struct MethodHandleItem {
 pub fn MethodHandleItem::is_field_ref(Self) -> Bool
 pub fn MethodHandleItem::is_method_ref(Self) -> Bool
@@ -88,7 +93,9 @@ pub(all) enum MethodHandleKind {
 pub(all) struct ParameterAnnotations {
 pub(all) struct ProtoId {
 pub(all) enum TableKind {
+pub fn TableKind::to_repr(Self) -> @debug.Repr
 pub(all) struct TryItem {
+pub struct XrefIndex {
 pub fn XrefIndex::callees(Self, Int32) -> Array[XrefSite] raise DexError
 pub fn XrefIndex::callers(Self, Int32) -> Array[XrefSite] raise DexError
 pub fn XrefIndex::field_sites(Self, Int32) -> Array[XrefSite] raise DexError
