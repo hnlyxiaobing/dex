@@ -3,6 +3,12 @@
 > 本文件登记影响公开面 / 行为 / 证据链的变更。加法性 API 变更必须在此留一条，且与
 > `pkg.generated.mbti` 快照在同一次提交。条目按时间倒序。
 
+## 2026-11-19 · W9：hiddenapi 文档声明（选项 A，零 API）
+
+- 裁决：hiddenapi 位（access_flags 高 16 位）属 ART 内部约定，非 DEX 格式规范（§9 判据界外），
+  选项 A 通过——README 非目标节新增明确声明："本库不解释、不映射、不声明枚举"。
+- 零公开 API 变更，`pkg.generated.mbti` 无 diff。既有 `access_flags` 原始输出口径不变。
+
 ## 2026-11-19 · W8：catch handler 多类型展开视图（新增公开 API）
 
 - 新增 `catchview.mbt`：补齐 B7 深度限制——encoded_catch_handler_list 全量

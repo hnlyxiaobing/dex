@@ -21,6 +21,7 @@
 - 不做 Java 反编译、CFG、跨 dex 合并或虚分派展开
 - 不覆盖反射、MethodHandle 运行时目标、JNI RegisterNatives、动态代理与运行时织入
 - 不 import 任何其他工作区模块
+- **access_flags 以原始 `Int32` 输出**；高 16 位含 ART hiddenapi 内部标记（blocked/greylist/max-target-* 等），这些位**不属于 DEX 格式规范**而是 Android 运行时在构建过程注入的约定——本库不解释、不映射、不声明枚举
 
 ## 2. 关键设计决策（本仓库自足记录）
 

@@ -204,6 +204,6 @@ pwsh -File tools/bench-dex.ps1   # 可选第六道（需 python + native release
 - [x] W6：T-W6-1, T-W6-2, T-W6-3, T-W6-4（width 1/2/4/8 全矩阵 + 奇数 pad 恒等式 + 四错误路径 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 76ecf73）
 - [ ] W7（须裁决，裁决前保持未实现）：T-W7-1, T-W7-2, T-W7-3, T-W7-4, T-W7-5（含防火墙 I3）
 - [x] W8：T-W8-1, T-W8-2, T-W8-3, T-W8-4（多类型 handler 全量展开 + catch-all Some/None + I5 恒等式 + P5 防火墙 + 截断扫描 + 快照纯加法，2026-11-19 落地，提交 c170174）
-- [ ] W9（须裁决）：T-W9-1, T-W9-2 按裁决选项执行
+- [x] W9（选项 A 裁决，零 API）：T-W9-1（README 非目标节 hiddenapi 声明已落地，§9 判据 "界外" 与 B12 灰区记录一致，2026-11-19 落地，提交待哈希）
 - [ ] W10（须裁决）：T-W10-1 维持 MultiDexNotMerged 口径
 - [ ] L5 增强：parity 脚本 / 随机变异 runner / 变异自检四注入点（随 W2 起逐步强制）
