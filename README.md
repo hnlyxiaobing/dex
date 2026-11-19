@@ -1,7 +1,7 @@
 # dex · DEX 解析与反汇编
 
 > 独立发布单元 ｜ L1 逆向输入 ｜ `preferred_target = wasm` ｜ Apache-2.0
-> 状态：`moon test` **102/102** 通过（2026-11-19 本机复验，另有 3 个 `#skip` 用例不计入）；本文件是本仓库**唯一**说明文档。
+> 状态：`moon test` **109/109** 通过（2026-11-19 本机复验，另有 3 个 `#skip` 用例不计入）；本文件是本仓库**唯一**说明文档。
 > 公开 API 以 `pkg.generated.mbti` 为准（由 `moon info` 生成，禁手工编辑）；加法性变更须登记簿记 + 快照审阅 + 快照门禁。
 
 ## 1. 定位与边界
@@ -114,6 +114,7 @@ pub(all) struct XrefSite {
 ## 5. 命令行与验证
 
 - `moon run cmd/main --target native -- dump <apk|dex> [--view ...] [--json]` / `disasm <apk|dex> [--method <ref>]`；`--json` 同步输出 `annotations` / `static_values`。
+- APK 输入：条目 CRC-32 不符（或解压失败）时**整体拒绝**，无部分输出，退出码 1（见 `cmd/main/zipmin.mbt`）。
 - 复验：`moon clean` → `moon check --deny-warn` → `moon build` → `moon test` → `moon fmt --check` → `moon info` 后检查 `pkg.generated.mbti` 无意外 diff。
 - 本仓库为独立 Git 仓库，文档与 CI 均自包含，不依赖工作区其他目录。
 

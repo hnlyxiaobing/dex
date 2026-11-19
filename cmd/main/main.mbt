@@ -3,7 +3,8 @@
 /// 契约：退出码 0=成功 / 1=解析或IO错误 / 2=用法错误；
 /// 默认记录行输出（norm 口径与 dexdump 规范化黄金一致，见 tests/ASSETS.md §2），
 /// `--json` 机器可读。APK 容器条目读取使用自研宽松 ZIP 读取器 zipmin
-/// （`cmd/main/zipmin.mbt`，core/compress/flate 解压，零跨模块依赖）。
+/// （`cmd/main/zipmin.mbt`，core/compress/flate 解压，零跨模块依赖）；
+/// 条目 CRC-32 不符/解压失败时整体拒绝（无部分输出，退出码 1）。
 
 ///|
 let tool_name = "dex-cli"
@@ -105,12 +106,17 @@ fn parse_nat(s : String) -> Int32? {
 }
 
 ///|
-/// 从 APK 容器收集 dex 条目（按条目名字典序；宽松 ZIP 读取器，见 zipmin.mbt）；
-/// 找不到时报错返回空表。
-fn zip_dex_entries(
-  data : Bytes,
-  only : String?,
-) -> Array[(String, Bytes)] raise {
+/// 条目收集结果：`entries` + 诊断（成功时 `diag` 为空串）。
+priv struct ZDexCollect {
+  entries : Array[(String, Bytes)]
+  diag : String
+}
+
+///|
+/// 从 APK 容器收集 dex 条目（按条目名字典序；宽松 ZIP 读取器，见 zipmin.mbt）。
+/// 任一被选中的 dex 条目损坏（CRC/解压/结构失败）→ 整体 fail-closed：
+/// 返回空表（无部分输出），`diag` 给出明确诊断。
+fn zip_dex_collect(data : Bytes, only : String?) -> ZDexCollect {
   let ents = zip_min_entries(data)
   let names : Array[String] = []
   for e in ents {
@@ -135,17 +141,40 @@ fn zip_dex_entries(
   for n in names {
     for e in ents {
       if e.name == n {
-        out.push((n, zip_min_extract(data, e)))
+        let r = zip_min_extract(data, e)
+        if !r.ok {
+          return ZDexCollect::{
+            entries: [],
+            diag: "APK 条目 \{r.reason}：\{n}",
+          }
+        }
+        out.push((n, r.data))
       }
     }
   }
   if only is Some(v) && out.is_empty() {
-    eprintln("error: APK 中找不到 dex 条目：\{v}")
+    return ZDexCollect::{
+      entries: [],
+      diag: "APK 中找不到 dex 条目：\{v}",
+    }
   }
   if only is None && out.is_empty() {
-    eprintln("error: APK 中没有 classes*.dex 条目")
+    return ZDexCollect::{
+      entries: [],
+      diag: "APK 中没有 classes*.dex 条目",
+    }
   }
-  out
+  ZDexCollect::{ entries: out, diag: "", }
+}
+
+///|
+/// 从 APK 容器收集 dex 条目；失败时打印诊断并返回空表（调用方按退出码 1 处理）。
+fn zip_dex_entries(data : Bytes, only : String?) -> Array[(String, Bytes)] {
+  let c = zip_dex_collect(data, only)
+  if c.diag != "" {
+    eprintln("error: \{c.diag}")
+  }
+  c.entries
 }
 
 ///|

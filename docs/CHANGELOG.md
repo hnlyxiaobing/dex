@@ -3,6 +3,25 @@
 > 本文件登记影响公开面 / 行为 / 证据链的变更。加法性 API 变更必须在此留一条，且与
 > `pkg.generated.mbti` 快照在同一次提交。条目按时间倒序。
 
+## 2026-11-19 · W3：zipmin 条目 CRC-32 校验 + CLI 收集 fail-closed
+
+- `cmd/main/zipmin.mbt`：新增私有 table-driven CRC-32（IEEE 802.3，反射多项式 `0xEDB88320`，
+  初值/终值 `0xFFFFFFFF`，`UInt` 运算，模块级 256 项查表，确定性），core 的 crc32 在 internal
+  包不可用故自研。读取条目时比对 CRC：中央目录偏移 `+16`、本地头偏移 `+14`。
+- 判定语义：CRC 一致 → 正常返回；CRC 不符 / Deflate 解压失败 / 中央目录与本地头 CRC 非零且
+  互相矛盾 → 该条目判失败；任一被选中的 dex 条目失败 → **整体 fail-closed**——`zip_dex_entries`
+  返回空表（无部分输出）、stderr 明确诊断（如 `error: APK 条目 CRC 校验失败：<name>`），
+  走既有 `main` 失败路径（退出码 1）。
+- 现有能力不回退：Store(0)/Deflate(8)、aapt2 风格 local extra 1~3 字节裸填充原样跳过；
+  ZIP64 继续显式拒绝（csize/usize `0xFFFFFFFF`、EOCD 计数 `0xFFFF`），口径不变。
+- **公开 API 0 变化**：`pkg.generated.mbti` / `cmd/main/pkg.generated.mbti` 快照 0 行增删；
+  不改 `parse` / `signature_ok`。
+- 新增 6 个测试（103 → 109，白色盒 `cmd/main/zipmin_wbtest.mbt`，合成 ZIP 程序化构造，不引入
+  二进制 fixture）：CRC-32 已知向量（`123456789`→`0xCBF43926`）、T-W3-1 Store/Deflate 双形态、
+  T-W3-2 Deflate 压缩体损坏失败不 panic、T-W3-3 坏一条 dex 整体拒绝无部分输出、
+  T-W3-4 local extra 1~3 字节 padding 回归、T-W3-5 ZIP64 标记显式拒绝。
+- 五门禁全绿；3 个既有 `#skip` 保持原样。
+
 ## 2026-11-19 · W2 加固：SHA-1 字节提取补齐 `& 0xFFU` 掩码
 
 - `sha1.mbt` 中 16 个消息字的字节→`UInt32` 提取，四个通道统一补齐 `& 0xFFU` 掩码，

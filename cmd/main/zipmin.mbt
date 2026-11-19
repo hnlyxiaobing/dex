@@ -7,7 +7,8 @@
 /// 本读取器只解析中央目录（实测干净），提取时用 local 头的 name_len/extra_len 直接
 /// 计算负载起点、跳过整个 extra 区域，**不遍历 extra 链**，对填充天然容忍。
 /// 范围限定（如实登记）：不支持 ZIP64（开发期样本均无 ZIP64）、
-/// 仅 method 0(Store)/8(Deflate)、不做 CRC-32 校验；条目名按 UTF-8 解码。
+/// 仅 method 0(Store)/8(Deflate)；读取条目时比对 CRC-32（不符/解压失败即 fail-closed）；
+/// 条目名按 UTF-8 解码。
 
 ///|
 /// 中央目录条目（宽松读取器视图）。
@@ -17,6 +18,7 @@ struct ZEntry {
   csize : Int32
   comp : Int32
   local_off : Int32
+  crc : Int32 // 中央目录头 CRC-32（位模式；本地头 CRC 在读取时另行读取）
 }
 
 ///|
@@ -68,6 +70,32 @@ fn z_u32(data : Bytes, off : Int32) -> Int32 {
 }
 
 ///|
+/// CRC-32 查表（IEEE 802.3，反射多项式 0xEDB88320）；模块级常量，确定性。
+let crc32_table : Array[UInt32] = {
+  let t : Array[UInt32] = Array::make(256, 0U)
+  for n in 0..<256 {
+    let mut c = n.reinterpret_as_uint()
+    for _ in 0..<8 {
+      c = if (c & 1U) == 1U { (c >> 1) ^ 0xEDB88320U } else { c >> 1 }
+    }
+    t[n] = c
+  }
+  t
+}
+
+///|
+/// CRC-32（IEEE 802.3）：初值/终值 `0xFFFFFFFF`，反射表驱动，`UInt` 无符号运算。
+fn z_crc32(data : Bytes) -> UInt32 {
+  let mut crc : UInt32 = 0xFFFFFFFFU
+  for i in 0..<data.length() {
+    let byte = data[i].to_int().reinterpret_as_uint() & 0xFFU
+    let idx = ((crc ^ byte) & 0xFFU).reinterpret_as_int()
+    crc = crc32_table[idx] ^ (crc >> 8)
+  }
+  crc ^ 0xFFFFFFFFU
+}
+
+///|
 /// 拷贝 `data[off..off+len]` 为独立 `Bytes`。
 fn z_slice(data : Bytes, off : Int32, len : Int32) -> Bytes {
   let arr : Array[Byte] = []
@@ -103,6 +131,13 @@ fn zip_min_entries(data : Bytes) -> Array[ZEntry] {
     return ([] : Array[ZEntry])
   }
   let count = z_u16(data, eocd + 10)
+  // ZIP64 显式拒绝：EOCD 总条目数 0xFFFF 为 ZIP64 标记（口径不变，不新增支持）。
+  if count == 0xFFFF {
+    eprintln(
+      "error: zip: EOCD 条目计数 0xFFFF（ZIP64 标记），不支持",
+    )
+    return ([] : Array[ZEntry])
+  }
   let cd_off = z_u32(data, eocd + 16)
   if cd_off < 0 || cd_off + 4 > n {
     eprintln(
@@ -119,6 +154,7 @@ fn zip_min_entries(data : Bytes) -> Array[ZEntry] {
       return ([] : Array[ZEntry])
     }
     let comp = z_u16(data, pos + 10)
+    let crc = z_u32(data, pos + 16)
     let csize = z_u32(data, pos + 20)
     let usize = z_u32(data, pos + 24)
     let name_len = z_u16(data, pos + 28)
@@ -136,7 +172,7 @@ fn zip_min_entries(data : Bytes) -> Array[ZEntry] {
       return ([] : Array[ZEntry])
     }
     let name = z_str(z_slice(data, pos + 46, name_len))
-    out.push(ZEntry::{ name, usize, csize, comp, local_off, })
+    out.push(ZEntry::{ name, usize, csize, comp, local_off, crc, })
     pos = pos + 46 + name_len + extra_len + cmt_len
     k = k + 1
   }
@@ -144,31 +180,62 @@ fn zip_min_entries(data : Bytes) -> Array[ZEntry] {
 }
 
 ///|
-/// 按条目提取负载（Store/Deflate；跳过 extra 区域、不遍历 extra 链）。
-/// 返回空 `Bytes` 并打印错误表示提取失败（调用方按退出码 1 处理）。
-fn zip_min_extract(data : Bytes, e : ZEntry) -> Bytes raise {
+/// 提取 + CRC 校验结果：`ok=false` 表示该条目损坏（CRC/解压/结构失败），
+/// 由调用方统一 fail-closed（`reason` 供诊断）。
+priv struct ZExtract {
+  data : Bytes
+  ok : Bool
+  reason : String
+}
+
+///|
+/// 按条目提取负载（Store/Deflate；跳过 extra 区域、不遍历 extra 链），
+/// 并比对 CRC-32：本地头/中央目录 CRC、解压后 payload 计算值。
+/// 失败返回 `ok=false`（不 panic），由 `zip_dex_entries` 统一 fail-closed。
+fn zip_min_extract(data : Bytes, e : ZEntry) -> ZExtract {
   let lo = e.local_off
   if lo < 0 || lo + 30 > data.length() || z_u32(data, lo) != 0x04034b50 {
-    eprintln("error: zip: local 头异常：\{e.name}")
-    return b""
+    return ZExtract::{ data: b"", ok: false, reason: "local 头异常", }
   }
   let name_len = z_u16(data, lo + 26)
   let extra_len = z_u16(data, lo + 28)
   let start = lo + 30 + name_len + extra_len
   if start < 0 || start + e.csize > data.length() {
-    eprintln("error: zip: 条目负载越界：\{e.name}")
-    return b""
+    return ZExtract::{ data: b"", ok: false, reason: "条目负载越界", }
   }
-  if e.comp == 0 {
-    z_slice(data, start, e.csize)
+  let raw = z_slice(data, start, e.csize)
+  let payload : Bytes = if e.comp == 0 {
+    raw
   } else if e.comp == 8 {
     // 解压上限取中央目录 usize（防御 zip 炸弹；usize 未知时退化为 1GiB）
-    @flate.inflate_exact(
-      z_slice(data, start, e.csize).clamped_view(),
-      max_output_bytes=if e.usize > 0 { e.usize } else { 1073741824 },
-    )
+    let r : Bytes? = Some(
+      @flate.inflate_exact(
+        raw.clamped_view(),
+        max_output_bytes=if e.usize > 0 { e.usize } else { 1073741824 },
+      ),
+    ) catch {
+      _ => None
+    }
+    match r {
+      Some(p) => p
+      None => return ZExtract::{ data: b"", ok: false, reason: "解压失败", }
+    }
   } else {
-    eprintln("error: zip: 不支持的压缩方法 \{e.comp}：\{e.name}")
-    b""
+    return ZExtract::{
+      data: b"",
+      ok: false,
+      reason: "不支持的压缩方法 \{e.comp}",
+    }
+  }
+  // CRC-32 校验：计算值须与中央目录 CRC 一致；中央/本地头 CRC 非零且互相矛盾亦判失败。
+  let computed = z_crc32(payload)
+  let central = e.crc.reinterpret_as_uint()
+  let local_crc = z_u32(data, lo + 14).reinterpret_as_uint()
+  let mismatch = computed != central
+  let contradiction = central != 0U && local_crc != 0U && central != local_crc
+  if mismatch || contradiction {
+    ZExtract::{ data: b"", ok: false, reason: "CRC 校验失败", }
+  } else {
+    ZExtract::{ data: payload, ok: true, reason: "", }
   }
 }
